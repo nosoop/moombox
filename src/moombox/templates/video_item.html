@@ -1,0 +1,51 @@
+<div id="job_{{video_item.id}}" class="video-item" hx-swap-oob="morph">
+  <div class="thumb">
+    {% if video_item.thumbnail_url %}
+    <img src="{{ video_item.thumbnail_url }}" />
+    {% else %}
+    <img src="https://i.ytimg.com/vi/{{video_item.video_id}}/maxresdefault.jpg" />
+    {% endif %}
+  </div>
+  <div>
+    <div>
+      <a href="https://youtu.be/{{video_item.video_id}}">{{video_item.title}}</a>
+      {% if video_item.current_manifest %}
+      <small>({{video_item.current_manifest}})</small>
+      {% endif %}
+    </div>
+    <small class="stream-author">
+      {% if video_item.channel_id %}
+      <a href="https://youtube.com/channel/{{video_item.channel_id}}">{{ video_item.author or 'who?' }}</a>
+      {% else %}
+      {{ video_item.author or 'who?' }}
+      {% endif %}
+    </small>
+  </div>
+  <div>
+    <sl-badge class="status {{video_item.status | lower}}" variant="primary">
+      {{video_item.status}}
+    </sl-badge>
+  </div>
+  <div class="job-progress">
+    {% set max_seq = [video_item.max_seq, video_item.video_seq, video_item.audio_seq] | max %}
+    {% if max_seq %}
+    <div class="job-progress-message" id="job_{{video_item.id}}_fragments">
+        <div>
+          <span>V: {{video_item.video_seq + 1 if max_seq else 0}}</span> /
+          <span>A: {{video_item.audio_seq + 1 if max_seq else 0}}</span> / 
+          <span>T: {{max_seq + 1 if max_seq else 0}}</span> /
+          <span>DL: {{video_item.total_downloaded | human_size}}</span>
+        </div>
+    </div>
+    {% elif video_item.scheduled_start_datetime %}
+    <div class="job-progress-message" id="job_{{video_item.id}}_waiting">
+        Scheduled to start
+        <sl-relative-time date="{{video_item.scheduled_start_datetime}}" format="long" sync></sl-relative-time><br />
+    </div>
+    {% else %}
+    <div class="job-progress-message" id="job_{{video_item.id}}_waiting">
+        Waiting for stream&hellip;
+    </div>
+    {% endif %}
+  </div>
+</div>

@@ -1,0 +1,20 @@
+<sl-tab slot="nav" panel="tasks">Tasks</sl-tab>
+<sl-tab-panel name="tasks">
+  <sl-button variant="primary" onclick="document.querySelector('#dialog').show();"><sl-icon slot="prefix" name="plus"></sl-icon>Add video</sl-button>
+  <form id="add_video_form" hx-post="{{ url_for('add_video') }}" hx-swap="none" hx-on::after-request="document.querySelector('#add_video_form').reset(); document.querySelector('#dialog').hide();">
+    <sl-dialog label="Add a video" id="dialog">
+      <sl-input name="url" label="Video URL" defaultValue="" placeholder="https://youtu.be/&hellip;" inputmode="url" required autofocus autocomplete="off"></sl-input>
+      <sl-input name="path" label="Download path" defaultValue="" placeholder="./downloads" autocomplete="off"></sl-input>
+      <sl-details summary="Additional options">
+        <sl-checkbox name="download_thumbnail" checked>Download thumbnail</sl-checkbox>
+        <sl-checkbox name="download_description" checked>Download description</sl-checkbox>
+        <sl-checkbox name="prefer_vp9" checked>Prefer VP9 over H264 at equivalent resolution</sl-checkbox>
+        <sl-input type="number" label="Concurrent stream download jobs" name="num_jobs" min="1" value="10" step="1" defaultValue="10"></sl-input>
+      </sl-details>
+      <sl-button slot="footer" variant="primary" type="submit" id="add-video" style="width: 100%;">Add</sl-button>
+    </sl-dialog>
+  </form>
+  <div hx-ext="ws,morph" ws-connect="{{ url_for('ws') }}" >
+    {% include 'video_table.html' %}
+  </div>
+</sl-tab-panel>

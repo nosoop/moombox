@@ -1,0 +1,12 @@
+    <!-- this gets swapped in whenever we add a video -->
+    <div id="video-table" hx-swap-oob="true">
+      <div id="video-table-header">
+        <div>Thumbnail</div>
+        <div>Video</div>
+        <div>Status</div>
+        <div>Progress</div>
+      </div>
+      {% for video_item in download_manager | reverse %}
+        {% include 'video_item.html' %}
+      {% endfor %}
+    </div>

@@ -1,0 +1,92 @@
+body {
+  font-family: var(--sl-font-sans);
+  margin: 0;
+}
+a {
+  color: var(--sl-color-primary-700);
+  text-decoration: none;
+  &:hover {
+    color: var(--sl-color-primary-800);
+  }
+}
+#video-table {
+  display: grid;
+  grid-template-columns: fit-content(12.5%) auto fit-content(12.5%) fit-content(18.375%);
+  padding: var(--sl-spacing-medium) 0;
+}
+#video-table-header, .video-item {
+  display: grid;
+  grid-template-columns: subgrid;
+  grid-column: 1 / 5;
+}
+#video-table-header {
+  margin-bottom: var(--sl-spacing-x-small);
+  border-bottom: 1px solid;
+  padding-bottom: var(--sl-spacing-x-small);
+  font-size: var(--sl-font-size-small);
+  font-weight: var(--sl-font-weight-semibold);
+  border-color: var(--sl-color-neutral-300);
+}
+#video-table-header, .video-item {
+  gap: var(--sl-spacing-x-small);
+}
+.video-item > div {
+  align-self: center;
+}
+.thumb {
+  padding: var(--sl-spacing-2x-small);
+  & > img {
+    object-fit: cover;
+    max-height: 6rem;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--sl-border-radius-medium);
+    width: 100%;
+  }
+}
+sl-badge.status {
+  text-transform: uppercase;
+
+  &.waiting::part(base) {
+    background-color: var(--sl-color-purple-700);
+  }
+  &.downloading::part(base) {
+    background-color: var(--sl-color-success-500);
+  }
+  &.muxing::part(base) {
+    background-color: var(--sl-color-warning-500);
+  }
+  &.error::part(base) {
+    background-color: var(--sl-color-danger-500);
+  }
+  &.finished::part(base) {
+    background-color: var(--sl-color-primary-500);
+  }
+}
+#dialog > :not(:first-child) {
+  margin-top: var(--sl-spacing-small);
+}
+.stream-author > a {
+  color: var(--sl-color-neutral-700);
+  &:hover {
+    color: var(--sl-color-neutral-800);
+  }
+}
+sl-tab::part(base) {
+  padding: var(--sl-spacing-x-small) var(--sl-spacing-small) ;
+}
+sl-tab-panel {
+  --padding: var(--sl-spacing-medium);
+}
+sl-details::part(content) {
+  display: flex;
+  flex-direction:column;
+  gap: var(--sl-spacing-x-small);
+}
+.job-progress {
+  display: flex;
+  flex-direction: row;
+}
+.job-progress-message {
+  align-self: center;
+  flex: 1;
+}
