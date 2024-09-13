@@ -62,8 +62,11 @@ sl-badge.status {
     background-color: var(--sl-color-primary-500);
   }
 }
-#dialog > :not(:first-child) {
-  margin-top: var(--sl-spacing-small);
+#dialog::part(body) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sl-spacing-small);
+  padding: 0 var(--body-spacing);
 }
 .stream-author > a {
   color: var(--sl-color-neutral-700);
@@ -81,6 +84,7 @@ sl-details::part(content) {
   display: flex;
   flex-direction:column;
   gap: var(--sl-spacing-x-small);
+  padding-top: 0;
 }
 .job-progress {
   display: flex;
