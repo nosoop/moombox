@@ -61,6 +61,9 @@ sl-badge.status {
   &.finished::part(base) {
     background-color: var(--sl-color-primary-500);
   }
+  &.unavailable::part(base) {
+    background-color: var( --sl-color-neutral-600);
+  }
 }
 #dialog::part(body) {
   display: flex;

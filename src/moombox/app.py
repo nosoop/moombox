@@ -42,6 +42,7 @@ class DownloadManager:
 
 class DownloadStatus(enum.StrEnum):
     UNKNOWN = "Unknown"
+    UNAVAILABLE = "Unavailable"
     WAITING = "Waiting"
     DOWNLOADING = "Downloading"
     MUXING = "Muxing"
@@ -87,6 +88,8 @@ class DownloadJob(BaseMessageHandler):
                 self.status = DownloadStatus.ERROR
             case msg if isinstance(msg, msgtypes.StreamMuxMessage):
                 self.status = DownloadStatus.MUXING
+            case msg if isinstance(msg, msgtypes.StreamUnavailableMessage):
+                self.status = DownloadStatus.UNAVAILABLE
             case _:
                 pass
         asyncio.create_task(self.manager.publish(self))
