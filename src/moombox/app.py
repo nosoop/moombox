@@ -52,8 +52,12 @@ class DownloadStatus(enum.StrEnum):
 
 class DownloadJob(BaseMessageHandler):
     id: str
-    downloader: YouTubeDownloader
-    manager: DownloadManager
+
+    # downloader and manager may be omitted if this job is pulled from cache
+    # or mocked for visual testing
+    downloader: YouTubeDownloader | None = None
+    manager: DownloadManager | None = None
+
     author: str | None = None
     channel_id: str | None = None
     video_id: str | None = None
@@ -92,11 +96,13 @@ class DownloadJob(BaseMessageHandler):
                 self.status = DownloadStatus.UNAVAILABLE
             case _:
                 pass
-        asyncio.create_task(self.manager.publish(self))
+        if self.manager:
+            asyncio.create_task(self.manager.publish(self))
 
     async def run(self) -> None:
-        self.downloader.handlers = [self]
-        await self.downloader.async_run()
+        if self.downloader:
+            self.downloader.handlers = [self]
+            await self.downloader.async_run()
 
     def get_status(self) -> dict:
         return {
