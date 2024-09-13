@@ -155,7 +155,7 @@ def create_app(test_config: dict | None = None) -> quart.Quart:
 
         output_directory = pathlib.Path("output")
         try:
-            requested_output_directory = form.get("path", None, type=pathlib.Path)
+            requested_output_directory = form.get("path", pathlib.Path(), type=pathlib.Path)
             if not requested_output_directory.is_absolute():
                 # root relative directories relative to our base output
                 # absolute paths are currently permitted
@@ -164,7 +164,7 @@ def create_app(test_config: dict | None = None) -> quart.Quart:
             # test the validity of the directory by creating it if it doesn't exist
             requested_output_directory.mkdir(parents=True, exist_ok=True)
             output_directory = requested_output_directory
-        except (ValueError, OSError) as exc:
+        except (ValueError, OSError):
             pass
 
         downloader = YouTubeDownloader(
