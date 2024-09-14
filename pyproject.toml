@@ -10,7 +10,7 @@ dependencies = [
     "quart ~= 0.19.6",
     "httpx ~= 0.27.0",
     "moonarchive @ git+https://github.com/nosoop/moonarchive",
-    "msgspec ~= 0.8.6",
+    "msgspec ~= 0.18.6",
     "tldextract ~= 5.1.2",
 ]
 
