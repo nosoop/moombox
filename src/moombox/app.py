@@ -11,6 +11,8 @@ from typing import Any, AsyncGenerator
 
 import moonarchive.models.messages as msgtypes
 import quart
+from hypercorn.middleware import ProxyFixMiddleware
+from hypercorn.typing import ASGIFramework
 from moonarchive.downloaders.youtube import YouTubeDownloader
 from moonarchive.output import BaseMessageHandler
 
@@ -113,8 +115,11 @@ class DownloadJob(BaseMessageHandler):
         }
 
 
-def create_app(test_config: dict | None = None) -> quart.Quart:
-    # create and configure the app
+def create_quart_app(test_config: dict | None = None) -> quart.Quart:
+    """
+    Creates the Quart app.  This exposes additional methods that are not available under
+    ASGIFramework.
+    """
     app = quart.Quart(__name__, instance_relative_config=True)
     app.config.from_mapping(
         SECRET_KEY="dev",
@@ -237,16 +242,25 @@ def create_app(test_config: dict | None = None) -> quart.Quart:
             num /= 1024.0
         return f"{num:.2f}Yi{suffix}"
 
-    if app.config.get("PROXY_FIX_OPTS"):
+    return app
+
+
+def create_app(test_config: dict | None = None) -> ASGIFramework:
+    """
+    Creates an app configured for production use via Hypercorn.
+    """
+    app = create_quart_app(test_config)
+
+    if app.config.get("PROXY_FIX_OPTS") is not None:
         # apply proxy fixing middleware if PROXY_FIX_OPTS is present
-        # this allows applications to be forwarded correctly and enables configurable subpath mounts
-        pass
+        # this may be an empty dict
+        return ProxyFixMiddleware(app, **app.config["PROXY_FIX_OPTS"])
 
     return app
 
 
 def main() -> None:
-    app = create_app()
+    app = create_quart_app()
     app.run()
 
 
