@@ -99,7 +99,7 @@ class DownloadJob(BaseMessageHandler):
             case _:
                 pass
         if self.manager:
-            asyncio.create_task(self.manager.publish(self))
+            quart.current_app.add_background_task(self.manager.publish, self)
 
     async def run(self) -> None:
         if self.downloader:
@@ -215,7 +215,7 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
                     )
 
         manager.jobs.append(job)
-        asyncio.create_task(job.run())
+        quart.current_app.add_background_task(job.run)
 
         return await quart.render_template(
             "video_table.html",
