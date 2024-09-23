@@ -13,6 +13,7 @@ a {
   display: grid;
   grid-template-columns: fit-content(12.5%) auto fit-content(12.5%) fit-content(18.375%);
   padding: var(--sl-spacing-medium) 0;
+  gap: var(--sl-spacing-x-small) 0;
 }
 #video-table-header, .video-item {
   display: grid;
@@ -34,13 +35,13 @@ a {
   align-self: center;
 }
 .thumb {
-  padding: var(--sl-spacing-2x-small);
   & > img {
     object-fit: cover;
     max-height: 6rem;
     aspect-ratio: 16 / 9;
     border-radius: var(--sl-border-radius-medium);
     width: 100%;
+    display: block;
   }
 }
 sl-badge.status {
