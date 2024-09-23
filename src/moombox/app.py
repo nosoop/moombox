@@ -145,14 +145,14 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
     manager = DownloadManager()
 
     @app.route("/")
-    async def main() -> Any:
+    async def main() -> str:
         return await quart.render_template(
             "index.html",
             download_manager=manager.jobs,
         )
 
     @app.post("/add")
-    async def add_video() -> Any:
+    async def add_video() -> str:
         form = await quart.request.form
 
         jobid = secrets.token_urlsafe(8)
@@ -223,7 +223,7 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
         )
 
     @app.get("/status")
-    async def get_status() -> Any:
+    async def get_status() -> list[dict]:
         return [job.get_status() for job in manager.jobs]
 
     @app.websocket("/ws")
