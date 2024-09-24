@@ -14,7 +14,7 @@
       <sl-button slot="footer" variant="primary" type="submit" id="add-video" style="width: 100%;">Add</sl-button>
     </sl-dialog>
   </form>
-  <div hx-ext="ws,morph" ws-connect="{{ url_for('ws') }}" >
+  <div hx-ext="ws,morph" ws-connect="{{ url_for('stream_overview') }}" >
     {% include 'video_table.html' %}
   </div>
 </sl-tab-panel>

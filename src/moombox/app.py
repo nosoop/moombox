@@ -226,8 +226,8 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
     async def get_status() -> list[dict]:
         return [job.get_status() for job in manager.jobs.values()]
 
-    @app.websocket("/ws")
-    async def ws() -> None:
+    @app.websocket("/ws/overview")
+    async def stream_overview() -> None:
         await quart.render_template(
             "video_table.html",
             download_manager=manager.jobs.values(),
