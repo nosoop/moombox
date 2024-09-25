@@ -24,5 +24,12 @@
       Raw downloaded size: <sl-format-number value="{{video_item.total_downloaded}}"></sl-format-number> bytes
       ({{video_item.total_downloaded | human_size}})
     </div>
+    <br>
+    <small>String message output:</small>
+    <div>
+      <textarea id="video-job-messages" wrap="off" rows="16" readonly>
+      {%- for datestamp, message in video_item.message_log %}[{{ datestamp.strftime('%Y-%m-%d %H:%M:%S') }}] {{ message + "\n" }}{% endfor -%}
+      </textarea>
+    </div>
   </div>
 </div>

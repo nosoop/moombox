@@ -9,9 +9,10 @@ import functools
 import os
 import pathlib
 import secrets
-from typing import Any, AsyncGenerator
+from typing import Any, AsyncGenerator, NamedTuple
 
 import moonarchive.models.messages as msgtypes
+import msgspec
 import quart
 from hypercorn.middleware import ProxyFixMiddleware
 from hypercorn.typing import ASGIFramework
@@ -70,6 +71,11 @@ class DownloadStatus(enum.StrEnum):
     ERROR = "Error"
 
 
+class DownloadLogMessage(NamedTuple):
+    event_datetime: datetime.datetime
+    message: str
+
+
 class DownloadJob(BaseMessageHandler):
     id: str
 
@@ -90,6 +96,7 @@ class DownloadJob(BaseMessageHandler):
     max_seq: int = 0
     total_downloaded: int = 0
     status: DownloadStatus = DownloadStatus.UNKNOWN
+    message_log: list[DownloadLogMessage] = msgspec.field(default_factory=list)
 
     async def handle_message(self, msg: msgtypes.BaseMessage) -> None:
         match msg:
@@ -114,6 +121,8 @@ class DownloadJob(BaseMessageHandler):
                 self.status = DownloadStatus.MUXING
             case msg if isinstance(msg, msgtypes.StreamUnavailableMessage):
                 self.status = DownloadStatus.UNAVAILABLE
+            case msg if isinstance(msg, msgtypes.StringMessage):
+                self.append_message(msg.text)
             case _:
                 pass
         if self.manager:
@@ -124,6 +133,11 @@ class DownloadJob(BaseMessageHandler):
         if self.downloader:
             self.downloader.handlers = [self]
             await self.downloader.async_run()
+
+    def append_message(self, message: str) -> None:
+        self.message_log.append(
+            DownloadLogMessage(datetime.datetime.now(tz=datetime.UTC), message)
+        )
 
     def get_status(self) -> dict:
         return {

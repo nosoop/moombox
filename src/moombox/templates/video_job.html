@@ -40,13 +40,20 @@
       #return {
         padding-bottom: var(--sl-spacing-small);
       }
+      #video-job-messages {
+        width: 100%;
+        resize: none;
+        font-family: var(--sl-font-mono);
+        font-size: var(--sl-font-size-x-small);
+        box-sizing: border-box;
+      }
       sl-progress-bar.job-progress-bar {
         --indicator-color: #FF0000;
         --height: 6px;
       }
     </style>
   </head>
-  <body hx-ext="ws,morph" ws-connect="{{ url_for('stream_job_info', id=video_item.id) }}">
+  <body hx-ext="ws,morph" ws-connect="{{ url_for('stream_job_info', id=video_item.id) }}" hx-on:htmx:ws-before-message="log_update_pre();" hx-on:htmx:ws-after-message="log_update_post();">
     <main>
       <sl-button id="return" href="{{ url_for('main') }}">
         <sl-icon slot="prefix" name="arrow-left"></sl-icon>
@@ -55,4 +62,23 @@
       {% include 'video_job_details.html' %}
     </main>
   </body>
+  <script>
+    let savedposition;
+    let bottomscroll;
+    let selection = [];
+    function log_update_pre() {
+      const logelement = document.querySelector("#video-job-messages");
+      selection = [ logelement.selectionStart, logelement.selectionEnd ]
+      savedposition = logelement.scrollTop;
+      bottomscroll = logelement.scrollTop + logelement.offsetHeight >= logelement.scrollHeight;
+    }
+    
+    function log_update_post() {
+      const logelement = document.querySelector("#video-job-messages");
+      if (selection[0] != selection[1]) {
+        logelement.setSelectionRange(...selection);
+      }
+      logelement.scrollTop = bottomscroll? logelement.scrollHeight : savedposition;
+    }
+  </script>
 </html>
