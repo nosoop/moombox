@@ -98,3 +98,6 @@ sl-details::part(content) {
   align-self: center;
   flex: 1;
 }
+.job-progress-info {
+  align-self: center;
+}

@@ -1,9 +1,11 @@
 #!/usr/bin/python3
 
 import asyncio
+import collections
 import dataclasses
 import datetime
 import enum
+import functools
 import os
 import pathlib
 import secrets
@@ -27,6 +29,9 @@ class DownloadManager:
 
     jobs: dict[str, "DownloadJob"] = dataclasses.field(default_factory=dict)
     connections: set[asyncio.Queue] = dataclasses.field(default_factory=set)
+    detail_connections: dict[str, set[asyncio.Queue]] = dataclasses.field(
+        default_factory=functools.partial(collections.defaultdict, set)
+    )
 
     async def publish(self, message: Any) -> None:
         for connection in self.connections:
@@ -40,6 +45,19 @@ class DownloadManager:
                 yield await connection.get()
         finally:
             self.connections.remove(connection)
+
+    async def publish_detail(self, job: str, message: Any) -> None:
+        for connection in self.detail_connections[job]:
+            await connection.put(message)
+
+    async def subscribe_detail(self, job: str) -> AsyncGenerator:
+        connection: asyncio.Queue = asyncio.Queue()
+        self.detail_connections[job].add(connection)
+        try:
+            while True:
+                yield await connection.get()
+        finally:
+            self.detail_connections[job].remove(connection)
 
 
 class DownloadStatus(enum.StrEnum):
@@ -100,6 +118,7 @@ class DownloadJob(BaseMessageHandler):
                 pass
         if self.manager:
             quart.current_app.add_background_task(self.manager.publish, self)
+            quart.current_app.add_background_task(self.manager.publish_detail, self.id, self)
 
     async def run(self) -> None:
         if self.downloader:
@@ -221,6 +240,27 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
             "video_table.html",
             download_manager=manager.jobs.values(),
         )
+
+    @app.get("/job/<id>")
+    async def view_job_info(id: str) -> str:
+        if id not in manager.jobs:
+            quart.abort(404, "Task not found")
+        return await quart.render_template(
+            "video_job.html",
+            video_item=manager.jobs[id],
+        )
+
+    @app.websocket("/ws/job/<id>")
+    async def stream_job_info(id: str) -> None:
+        if id not in manager.jobs:
+            quart.abort(404, "Task not found")
+        await quart.websocket.send(
+            await quart.render_template("video_job_details.html", video_item=manager.jobs[id])
+        )
+        async for message in manager.subscribe_detail(id):
+            await quart.websocket.send(
+                await quart.render_template("video_job_details.html", video_item=message)
+            )
 
     @app.get("/status")
     async def get_status() -> list[dict]:

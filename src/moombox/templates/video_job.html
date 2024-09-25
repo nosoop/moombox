@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html class="sl-theme-dark">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>moombox / job</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/themes/dark.css" crossorigin="anonymous"/>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/shoelace-autoloader.js" crossorigin="anonymous"></script>
+
+    <script src="https://unpkg.com/htmx.org@2.0.0" integrity="sha384-wS5l5IKJBvK6sPTKa2WZ1js3d947pvWXbPJ1OmWfEuxLgeHcEbjUUA5i9V5ZkpCw" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/htmx-ext-ws@2.0.0/ws.js" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/idiomorph/dist/idiomorph-ext.min.js" crossorigin="anonymous"></script>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='moombox.css') }}" crossorigin="anonymous"/>
+    <style>
+      main {
+        max-width: 38rem;
+        margin: auto;
+        padding: var(--sl-spacing-medium);
+      }
+      #video-job-visual {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        padding-bottom: var(--sl-spacing-medium);
+      }
+      #video-job-visual .thumb {
+        aspect-ratio: 16/9;
+        object-fit: cover;
+      }
+      #video-job-info-title {
+        font-size: var(--sl-font-size-large);
+        font-weight: var(--sl-font-weight-semibold);
+        padding-bottom: var(--sl-spacing-small);
+      }
+      .video-embed {
+        aspect-ratio: 16 / 9;
+      }
+      #return {
+        padding-bottom: var(--sl-spacing-small);
+      }
+      sl-progress-bar.job-progress-bar {
+        --indicator-color: #FF0000;
+        --height: 6px;
+      }
+    </style>
+  </head>
+  <body hx-ext="ws,morph" ws-connect="{{ url_for('stream_job_info', id=video_item.id) }}">
+    <main>
+      <sl-button id="return" href="{{ url_for('main') }}">
+        <sl-icon slot="prefix" name="arrow-left"></sl-icon>
+        Back to overview
+      </sl-button>
+      {% include 'video_job_details.html' %}
+    </main>
+  </body>
+</html>
