@@ -3,7 +3,7 @@
     <iframe class="video-embed" src="https://www.youtube-nocookie.com/embed/{{video_item.video_id}}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
     {% set max_seq = [video_item.max_seq, video_item.video_seq, video_item.audio_seq, 1] | max %}
     {% set cur_seq = [video_item.video_seq, video_item.audio_seq] | min %}
-    <sl-progress-bar class="job-progress-bar" value="{{ 100 * cur_seq / max_seq }}"></sl-progress-bar>
+    <sl-progress-bar class="job-progress-bar" value="{{ 100 * (cur_seq + 1) / max_seq }}"></sl-progress-bar>
   </div>
   <div id="video-job-info">
     <div id="video-job-info-title">{{video_item.title}}</div>
