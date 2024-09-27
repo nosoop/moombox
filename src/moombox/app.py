@@ -25,7 +25,7 @@ class DownloadManager:
     Keeps track of download jobs and passes messages to connected clients.
     """
 
-    jobs: list["DownloadJob"] = dataclasses.field(default_factory=list)
+    jobs: dict[str, "DownloadJob"] = dataclasses.field(default_factory=dict)
     connections: set[asyncio.Queue] = dataclasses.field(default_factory=set)
 
     async def publish(self, message: Any) -> None:
@@ -148,7 +148,7 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
     async def main() -> str:
         return await quart.render_template(
             "index.html",
-            download_manager=manager.jobs,
+            download_manager=manager.jobs.values(),
         )
 
     @app.post("/add")
@@ -214,17 +214,17 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
                         video_response.playability_status.scheduled_start_datetime
                     )
 
-        manager.jobs.append(job)
+        manager.jobs[jobid] = job
         quart.current_app.add_background_task(job.run)
 
         return await quart.render_template(
             "video_table.html",
-            download_manager=manager.jobs,
+            download_manager=manager.jobs.values(),
         )
 
     @app.get("/status")
     async def get_status() -> list[dict]:
-        return [job.get_status() for job in manager.jobs]
+        return [job.get_status() for job in manager.jobs.values()]
 
     @app.websocket("/ws")
     async def ws() -> None:
