@@ -76,6 +76,13 @@ class DownloadLogMessage(NamedTuple):
     message: str
 
 
+class DownloadManifestProgress(msgspec.Struct):
+    video_seq: int = 0
+    audio_seq: int = 0
+    max_seq: int = 0
+    total_downloaded: int = 0
+
+
 class DownloadJob(BaseMessageHandler):
     id: str
 
@@ -91,12 +98,11 @@ class DownloadJob(BaseMessageHandler):
     thumbnail_url: str | None = None
     current_manifest: str | None = None
     title: str | None = None
-    video_seq: int = 0
-    audio_seq: int = 0
-    max_seq: int = 0
-    total_downloaded: int = 0
     status: DownloadStatus = DownloadStatus.UNKNOWN
     message_log: list[DownloadLogMessage] = msgspec.field(default_factory=list)
+    manifest_progress: dict[str, DownloadManifestProgress] = msgspec.field(
+        default_factory=functools.partial(collections.defaultdict, DownloadManifestProgress)
+    )
 
     async def handle_message(self, msg: msgtypes.BaseMessage) -> None:
         match msg:
@@ -105,12 +111,14 @@ class DownloadJob(BaseMessageHandler):
                 self.status = DownloadStatus.WAITING
             case msg if isinstance(msg, msgtypes.FragmentMessage):
                 self.status = DownloadStatus.DOWNLOADING
-                self.max_seq = max(self.max_seq, msg.max_fragments)
+
+                manifest_progress = self.manifest_progress[msg.manifest_id]
+                manifest_progress.max_seq = max(manifest_progress.max_seq, msg.max_fragments)
                 if msg.media_type == "audio":
-                    self.audio_seq = msg.current_fragment
+                    manifest_progress.audio_seq = msg.current_fragment
                 elif msg.media_type == "video":
-                    self.video_seq = msg.current_fragment
-                self.total_downloaded += msg.fragment_size
+                    manifest_progress.video_seq = msg.current_fragment
+                manifest_progress.total_downloaded += msg.fragment_size
                 self.current_manifest = msg.manifest_id
                 self.video_id, *_ = msg.manifest_id.split(".")
             case msg if isinstance(msg, msgtypes.DownloadJobFinishedMessage):
@@ -149,6 +157,22 @@ class DownloadJob(BaseMessageHandler):
             "audio_fragments": self.audio_seq,
             "state": self.status,
         }
+
+    @property
+    def video_seq(self) -> int:
+        return sum(prog.video_seq for prog in self.manifest_progress.values())
+
+    @property
+    def audio_seq(self) -> int:
+        return sum(prog.audio_seq for prog in self.manifest_progress.values())
+
+    @property
+    def max_seq(self) -> int:
+        return sum(prog.max_seq for prog in self.manifest_progress.values())
+
+    @property
+    def total_downloaded(self) -> int:
+        return sum(prog.total_downloaded for prog in self.manifest_progress.values())
 
 
 def create_quart_app(test_config: dict | None = None) -> quart.Quart:

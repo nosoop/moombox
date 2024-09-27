@@ -55,6 +55,13 @@
         --indicator-color: #FF0000;
         --height: 6px;
       }
+      #manifest-breakdown > ul {
+        margin: var(--sl-spacing-x-small);
+        padding-left: var(--sl-spacing-large);
+      }
+      .manifest-id {
+        font-family: var(--sl-font-mono);
+      }
     </style>
   </head>
   <body hx-ext="ws,morph" ws-connect="{{ url_for('stream_job_info', id=video_item.id) }}" hx-on:htmx:ws-before-message="log_update_pre();" hx-on:htmx:ws-after-message="log_update_post();">

@@ -22,6 +22,14 @@
         ({{video_item.total_downloaded | human_size}})
       </div>
     </div>
+    <div id="manifest-breakdown">
+      Manifest breakdown:
+      <ul>
+      {% for manifest, progress in video_item.manifest_progress.items() %}
+        <li><span class="manifest-id">{{manifest}}</span>: V: {{progress.video_seq + 1}} / A: {{progress.audio_seq + 1}} / T: {{progress.max_seq + 1}} / DL: {{progress.total_downloaded | human_size}}</li>
+      {% endfor %}
+      </ul>
+    </div>
     <div>
       <small>Message log:</small>
       <div>
