@@ -115,10 +115,12 @@ class DownloadJob(BaseMessageHandler):
                 self.video_id, *_ = msg.manifest_id.split(".")
             case msg if isinstance(msg, msgtypes.DownloadJobFinishedMessage):
                 self.status = DownloadStatus.FINISHED
+                self.append_message("Finished downloading")
             case msg if isinstance(msg, msgtypes.DownloadJobFailedOutputMoveMessage):
                 self.status = DownloadStatus.ERROR
             case msg if isinstance(msg, msgtypes.StreamMuxMessage):
                 self.status = DownloadStatus.MUXING
+                self.append_message("Started remux process")
             case msg if isinstance(msg, msgtypes.StreamUnavailableMessage):
                 self.status = DownloadStatus.UNAVAILABLE
             case msg if isinstance(msg, msgtypes.StringMessage):
@@ -132,6 +134,7 @@ class DownloadJob(BaseMessageHandler):
     async def run(self) -> None:
         if self.downloader:
             self.downloader.handlers = [self]
+            self.append_message("Started download task")
             await self.downloader.async_run()
 
     def append_message(self, message: str) -> None:
