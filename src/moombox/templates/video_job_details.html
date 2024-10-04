@@ -22,6 +22,7 @@
         ({{video_item.total_downloaded | human_size}})
       </div>
     </div>
+    {% if video_item.manifest_progress %}
     <div id="manifest-breakdown">
       Manifest breakdown:
       <ul>
@@ -30,6 +31,7 @@
       {% endfor %}
       </ul>
     </div>
+    {% endif %}
     <div>
       <small>Message log:</small>
       <div>
