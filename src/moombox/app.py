@@ -17,6 +17,7 @@ import quart
 from hypercorn.middleware import ProxyFixMiddleware
 from hypercorn.typing import ASGIFramework
 from moonarchive.downloaders.youtube import YouTubeDownloader
+from moonarchive.models.youtube_player import YTPlayerMediaType
 from moonarchive.output import BaseMessageHandler
 
 from . import extractor
@@ -174,6 +175,10 @@ class DownloadJob(BaseMessageHandler):
     def total_downloaded(self) -> int:
         return sum(prog.total_downloaded for prog in self.manifest_progress.values())
 
+    @property
+    def can_delete_tempfiles(self) -> bool:
+        return self.video_id is not None and self.status == DownloadStatus.FINISHED
+
 
 def create_quart_app(test_config: dict | None = None) -> quart.Quart:
     """
@@ -286,6 +291,32 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
     async def view_job_info(id: str) -> str:
         if id not in manager.jobs:
             quart.abort(404, "Task not found")
+        return await quart.render_template(
+            "video_job.html",
+            video_item=manager.jobs[id],
+        )
+
+    @app.delete("/job/<id>/tempfiles")
+    async def delete_job_tempfiles(id: str) -> str:
+        if id not in manager.jobs:
+            quart.abort(404, "Task not found")
+        job = manager.jobs[id]
+        if not job.downloader:
+            quart.abort(404, "Downloader not present")
+        if not job.can_delete_tempfiles:
+            quart.abort(400, "Cannot delete temporary files on an unfinished job")
+        assert job.video_id
+        if job.downloader.staging_directory and job.downloader.staging_directory.exists():
+            # avoid touching files not related to the job
+            # TODO: get the actual list of downloaded files from moonarchive
+            # TODO: disable functionality if files need to be manually processed
+            for f in job.downloader.staging_directory.iterdir():
+                if f.name.startswith(job.video_id):
+                    f.unlink()
+            try:
+                job.downloader.staging_directory.rmdir()
+            except OSError:
+                pass
         return await quart.render_template(
             "video_job.html",
             video_item=manager.jobs[id],

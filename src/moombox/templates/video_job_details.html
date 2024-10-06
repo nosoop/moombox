@@ -40,5 +40,17 @@
         </textarea>
       </div>
     </div>
+    {% if video_item.can_delete_tempfiles %}
+    <div id="danger-zone">
+      <small>Danger zone:</small>
+      <form hx-confirm="Are you sure you want to delete temporary files?" hx-swap="none">
+        <sl-button id="remove-staging" variant="danger" size="medium" hx-delete="{{ url_for('delete_job_tempfiles', id=video_item.id) }}" outline>
+          <sl-icon slot="prefix" name="trash" aria-hidden="true" library="default"></sl-icon>
+          Delete temporary staging files
+        </sl-button>
+        <!-- removing the final output file is far too destuctive, so we don't implement it here -->
+      </form>
+    </div>
+    {% endif %}
   </div>
 </div>
