@@ -132,6 +132,28 @@ class DownloadJob(BaseMessageHandler):
                 self.append_message("Started remux process")
             case msg if isinstance(msg, msgtypes.StreamUnavailableMessage):
                 self.status = DownloadStatus.UNAVAILABLE
+            case msg if isinstance(msg, msgtypes.FormatSelectionMessage):
+                major_type_str = str(msg.major_type).capitalize()
+                display_media_type = msg.format.media_type.codec_primary or "unknown codec"
+                if msg.major_type == YTPlayerMediaType.VIDEO:
+                    if display_media_type.startswith("avc1"):
+                        display_media_type = "h264"
+                    self.append_message(
+                        f"{major_type_str} format: {msg.format.quality_label} "
+                        f"{display_media_type} (itag {msg.format.itag}, manifest "
+                        f"{msg.manifest_id}, duration {msg.format.target_duration_sec})"
+                    )
+                elif msg.format.bitrate:
+                    self.append_message(
+                        f"{major_type_str} format: {msg.format.bitrate // 1000}k "
+                        f"{display_media_type} (itag {msg.format.itag}, manifest "
+                        f"{msg.manifest_id}, duration {msg.format.target_duration_sec})"
+                    )
+                else:
+                    self.append_message(
+                        f"{major_type_str} format selected (manifest "
+                        f"{msg.manifest_id}, duration {msg.format.target_duration_sec})"
+                    )
             case msg if isinstance(msg, msgtypes.StringMessage):
                 self.append_message(msg.text)
             case _:
