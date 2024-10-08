@@ -9,6 +9,7 @@ import functools
 import os
 import pathlib
 import secrets
+from contextvars import ContextVar
 from typing import Any, AsyncGenerator, NamedTuple
 
 import moonarchive.models.messages as msgtypes
@@ -62,6 +63,9 @@ class DownloadManager:
             self.detail_connections[job].remove(connection)
 
 
+manager_ctx: ContextVar[DownloadManager | None] = ContextVar("manager", default=None)
+
+
 class DownloadStatus(enum.StrEnum):
     UNKNOWN = "Unknown"
     UNAVAILABLE = "Unavailable"
@@ -87,10 +91,8 @@ class DownloadManifestProgress(msgspec.Struct):
 class DownloadJob(BaseMessageHandler):
     id: str
 
-    # downloader and manager may be omitted if this job is pulled from cache
-    # or mocked for visual testing
+    # downloader may be omitted if this job is pulled from cache or mocked for visual testing
     downloader: YouTubeDownloader | None = None
-    manager: DownloadManager | None = None
 
     author: str | None = None
     channel_id: str | None = None
@@ -158,9 +160,10 @@ class DownloadJob(BaseMessageHandler):
                 self.append_message(msg.text)
             case _:
                 pass
-        if self.manager:
-            quart.current_app.add_background_task(self.manager.publish, self)
-            quart.current_app.add_background_task(self.manager.publish_detail, self.id, self)
+        manager = manager_ctx.get()
+        if manager:
+            quart.current_app.add_background_task(manager.publish, self)
+            quart.current_app.add_background_task(manager.publish_detail, self.id, self)
 
     async def run(self) -> None:
         if self.downloader:
@@ -230,6 +233,7 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
         print(f" * Application instance path set to {os.path.abspath(app.instance_path)}")
 
     manager = DownloadManager()
+    manager_ctx.set(manager)
 
     @app.route("/")
     async def main() -> str:
@@ -278,7 +282,7 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
             num_parallel_downloads=form.get("num_jobs", 1, type=int),
         )
 
-        job = DownloadJob(jobid, downloader=downloader, manager=manager)
+        job = DownloadJob(jobid, downloader=downloader)
 
         if video_id:
             video_response = await extractor.fetch_youtube_player_response(video_id)
