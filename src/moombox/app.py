@@ -169,7 +169,11 @@ class DownloadJob(BaseMessageHandler):
         if self.downloader:
             self.downloader.handlers = [self]
             self.append_message("Started download task")
-            await self.downloader.async_run()
+            try:
+                await self.downloader.async_run()
+            except Exception as exc:
+                self.status = DownloadStatus.ERROR
+                self.append_message(f"Exception: {exc=}")
 
     def append_message(self, message: str) -> None:
         self.message_log.append(
