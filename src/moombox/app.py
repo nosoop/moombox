@@ -181,12 +181,7 @@ class DownloadJob(BaseMessageHandler):
         )
 
     def get_status(self) -> dict:
-        return {
-            "id": self.video_id,
-            "video_fragments": self.video_seq,
-            "audio_fragments": self.audio_seq,
-            "state": self.status,
-        }
+        return msgspec.to_builtins(msgspec.structs.replace(self, downloader=None))
 
     @property
     def video_seq(self) -> int:
