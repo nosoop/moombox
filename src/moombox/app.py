@@ -9,6 +9,7 @@ import functools
 import os
 import pathlib
 import secrets
+import sqlite3
 from contextvars import ContextVar
 from typing import Any, AsyncGenerator, NamedTuple
 
@@ -22,6 +23,7 @@ from moonarchive.models.youtube_player import YTPlayerMediaType
 from moonarchive.output import BaseMessageHandler
 
 from . import extractor
+from .database import database_ctx
 
 
 @dataclasses.dataclass
@@ -127,6 +129,17 @@ class DownloadJob(BaseMessageHandler):
             case msg if isinstance(msg, msgtypes.DownloadJobFinishedMessage):
                 self.status = DownloadStatus.FINISHED
                 self.append_message("Finished downloading")
+
+                database = database_ctx.get()
+                if database:
+                    database.execute(
+                        "INSERT OR IGNORE INTO jobs (id, payload) VALUES (?, ?)",
+                        (
+                            self.id,
+                            msgspec.json.encode(msgspec.structs.replace(self, downloader=None)),
+                        ),
+                    )
+                    database.commit()
             case msg if isinstance(msg, msgtypes.DownloadJobFailedOutputMoveMessage):
                 self.status = DownloadStatus.ERROR
             case msg if isinstance(msg, msgtypes.StreamMuxMessage):
@@ -233,6 +246,24 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
 
     manager = DownloadManager()
     manager_ctx.set(manager)
+
+    database = sqlite3.connect(pathlib.Path(app.instance_path) / "database.db3")
+    database.execute("CREATE TABLE IF NOT EXISTS jobs (id TEXT PRIMARY KEY, payload TEXT)")
+    database.commit()
+    database_ctx.set(database)
+
+    cur = database.cursor()
+    cur.execute("SELECT id, payload FROM jobs")
+    for id, previous_job in cur.fetchall():
+        try:
+            # the format is currently unstable and may change in the future
+            #
+            # we do not provide any compatibility guarantees across versions, but we never clear
+            # out the jobs from the database so they effectively will just be hidden
+            manager.jobs[id] = msgspec.json.decode(previous_job, type=DownloadJob)
+            app.logger.info(f"Loaded job {id} from cache.")
+        except msgspec.DecodeError as exc:
+            app.logger.warning(f"Error loading job {id} from cache: {exc}")
 
     @app.route("/")
     async def main() -> str:
