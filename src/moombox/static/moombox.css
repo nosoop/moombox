@@ -14,11 +14,24 @@ a {
   grid-template-columns: fit-content(12.5%) auto fit-content(12.5%) fit-content(18.375%);
   padding: var(--sl-spacing-medium) 0;
   gap: var(--sl-spacing-x-small) 0;
+  @media only screen and (max-width: 992px) {
+    grid-template-columns: repeat(3, minmax(0px, 1fr));
+    gap: var(--sl-spacing-x-small);
+  }
+  @media only screen and (max-width: 768px) {
+    grid-template-columns: repeat(2, minmax(0px, 1fr));
+  }
+  @media only screen and (max-width: 576px) {
+    grid-template-columns: minmax(0px, 1fr);
+  }
 }
 #video-table-header, .video-item {
   display: grid;
   grid-template-columns: subgrid;
   grid-column: 1 / 5;
+  @media only screen and (max-width: 992px) {
+    grid-column: initial;
+  }
 }
 #video-table-header {
   margin-bottom: var(--sl-spacing-x-small);
@@ -27,6 +40,18 @@ a {
   font-size: var(--sl-font-size-small);
   font-weight: var(--sl-font-weight-semibold);
   border-color: var(--sl-color-neutral-300);
+  
+  @media only screen and (max-width: 992px) {
+    display: none;
+  }
+}
+.video-item {
+  @media only screen and (max-width: 992px) {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--sl-color-neutral-50);
+    padding: var(--sl-spacing-small);
+  }
 }
 #video-table-header, .video-item {
   gap: var(--sl-spacing-x-small);
@@ -35,6 +60,7 @@ a {
   align-self: center;
 }
 .thumb {
+  width: 100%;
   & > img {
     object-fit: cover;
     max-height: 6rem;
@@ -42,6 +68,10 @@ a {
     border-radius: var(--sl-border-radius-medium);
     width: 100%;
     display: block;
+    @media only screen and (max-width: 992px) {
+      margin-bottom: var(--sl-spacing-x-small);
+      max-height: initial;
+    }
   }
 }
 sl-badge.status {
