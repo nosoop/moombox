@@ -34,7 +34,6 @@ a {
   }
 }
 #video-table-header {
-  margin-bottom: var(--sl-spacing-x-small);
   border-bottom: 1px solid;
   padding-bottom: var(--sl-spacing-x-small);
   font-size: var(--sl-font-size-small);
