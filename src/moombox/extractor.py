@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import asyncio
 import base64
 import datetime
 import functools
@@ -165,13 +166,16 @@ async def fetch_youtube_player_response(video_id: str) -> YouTubePlayerResponse 
     }
 
     async with httpx.AsyncClient() as client:
-        r = await client.post(
-            "https://www.youtube.com/youtubei/v1/player",
-            params=params,
-            headers=headers,
-            json=payload,
-        )
-        response = msgspec.convert(r.json(), type=YouTubePlayerResponse)
-        if response.video_details and response.video_details.video_id == video_id:
-            return response
+        # we may occasionally get null responses out of this for some reason, so try a few times
+        for _ in range(10):
+            r = await client.post(
+                "https://www.youtube.com/youtubei/v1/player",
+                params=params,
+                headers=headers,
+                json=payload,
+            )
+            response = msgspec.convert(r.json(), type=YouTubePlayerResponse)
+            if response.video_details and response.video_details.video_id == video_id:
+                return response
+            await asyncio.sleep(10)
     return None
