@@ -45,6 +45,20 @@ device as it'll be used while downloading and muxing the final file before being
 You can also pass `--user` to run moombox as a different user if executing `docker` or `podman`
 as root.  Make sure that, if it already exists, `/data/config/database.db3` is writable.
 
+## Configuration
+
+Configuration is controlled by a `config.toml` in the instance path.  See `config.example.toml`
+for documentation on the features.
+
+If you installed moombox via Python, see [Flask's documentation on it][instance-path]
+(we use Quart, but same thing).
+
+You can set the `MOOMBOX_INSTANCE_PATH` environment variable to override the location.
+The Docker / Podman releases set the instance path to `/data/config` this way, and you should
+mount a folder to that location when running it (as described in the installation instructions).
+
+[instance-path]: https://flask.palletsprojects.com/en/stable/config/#instance-folders
+
 ## License
 
 Released under the MIT license.

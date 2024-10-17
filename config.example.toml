@@ -1,0 +1,19 @@
+# This is an example configuration file for moombox.
+# The configuration file is optional; the application will continue to run without one.
+# Depending on how moombox is configured, the location of `config.toml` will vary.
+# 
+# Note that many of the example values are system-dependent, so you should not be copying this
+# file and expecting it all to work.
+
+
+[[notifications]]
+# Notifications are handled by apprise, so refer to the supported notifications for the syntax:
+# https://github.com/caronc/apprise?tab=readme-ov-file#supported-notifications
+# 
+# You may define as many notification targets as you'd like.
+url = "discord://webhook_id/webhook_token"
+
+# moombox broadcasts notifications based on tags.
+# Tags have a category prefix:
+#   - 'status' prefix are for notifications sent on download task status change
+tags = [ "status:downloading", "status:finished", "status:error" ]
