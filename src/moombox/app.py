@@ -23,7 +23,9 @@ from moonarchive.models.youtube_player import YTPlayerMediaType
 from moonarchive.output import BaseMessageHandler
 
 from . import extractor
+from .config import ConfigManager
 from .database import database_ctx
+from .notifications import NotificationManager, apobj_ctx
 
 
 @dataclasses.dataclass
@@ -110,6 +112,7 @@ class DownloadJob(BaseMessageHandler):
     )
 
     async def handle_message(self, msg: msgtypes.BaseMessage) -> None:
+        prev_status = self.status
         match msg:
             case msg if isinstance(msg, msgtypes.StreamInfoMessage):
                 self.title = msg.video_title
@@ -173,6 +176,10 @@ class DownloadJob(BaseMessageHandler):
                 self.append_message(msg.text)
             case _:
                 pass
+
+        if prev_status != self.status:
+            self.broadcast_status_update()
+
         manager = manager_ctx.get()
         if manager:
             quart.current_app.add_background_task(manager.publish, self)
@@ -186,11 +193,23 @@ class DownloadJob(BaseMessageHandler):
                 await self.downloader.async_run()
             except Exception as exc:
                 self.status = DownloadStatus.ERROR
+                self.broadcast_status_update()
                 self.append_message(f"Exception: {exc=}")
 
     def append_message(self, message: str) -> None:
         self.message_log.append(
             DownloadLogMessage(datetime.datetime.now(tz=datetime.UTC), message)
+        )
+
+    def broadcast_status_update(self) -> None:
+        apobj = apobj_ctx.get()
+        if not apobj:
+            return
+        quart.current_app.add_background_task(
+            apobj.async_notify,
+            title=f"Archive status: {str(self.status).capitalize()}",
+            body=f"{self.title} from {self.author} @ https://youtu.be/{self.video_id}",
+            tag=f"status:{self.status.lower()}",
         )
 
     def get_status(self) -> dict:
@@ -272,6 +291,10 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
     manager = DownloadManager()
     manager_ctx.set(manager)
 
+    cfgmgr = ConfigManager(pathlib.Path(app.instance_path) / "config.toml")
+
+    notificationmgr = NotificationManager()
+
     database = sqlite3.connect(pathlib.Path(app.instance_path) / "database.db3")
     database.execute("CREATE TABLE IF NOT EXISTS jobs (id TEXT PRIMARY KEY, payload TEXT)")
     database.commit()
@@ -289,6 +312,11 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
             app.logger.info(f"Loaded job {id} from cache.")
         except msgspec.DecodeError as exc:
             app.logger.warning(f"Error loading job {id} from cache: {exc}")
+
+    @app.before_serving
+    async def startup() -> None:
+        app.add_background_task(notificationmgr.run)
+        app.add_background_task(cfgmgr.monitor_path)
 
     @app.route("/")
     async def main() -> str:
