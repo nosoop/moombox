@@ -2,7 +2,6 @@
 
 import os
 import pathlib
-import secrets
 import sqlite3
 
 import msgspec
@@ -87,8 +86,6 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
     async def add_video() -> str:
         form = await quart.request.form
 
-        jobid = secrets.token_urlsafe(8)
-
         target = form["url"]
 
         video_id = extractor.extract_video_id_from_string(target)
@@ -116,14 +113,14 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
             ffmpeg_path=None,
             write_description=form.get("download_description", False, type=bool),
             write_thumbnail=form.get("download_thumbnail", False, type=bool),
-            staging_directory=pathlib.Path("staging") / jobid,
+            staging_directory=None,
             output_directory=output_directory,
             prioritize_vp9=form.get("prefer_vp9", False, type=bool),
             cookie_file=None,
             num_parallel_downloads=form.get("num_jobs", 1, type=int),
         )
 
-        job = DownloadJob(jobid, downloader=downloader)
+        job = manager.create_job(downloader)
 
         if video_id:
             video_response = await extractor.fetch_youtube_player_response(video_id)
@@ -146,7 +143,6 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
                         video_response.playability_status.scheduled_start_datetime
                     )
 
-        manager.jobs[jobid] = job
         quart.current_app.add_background_task(job.run)
 
         return await quart.render_template(
