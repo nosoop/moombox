@@ -6,6 +6,8 @@ import dataclasses
 import datetime
 import enum
 import functools
+import pathlib
+import secrets
 from contextvars import ContextVar
 from typing import Any, AsyncGenerator, NamedTuple
 
@@ -31,6 +33,16 @@ class DownloadManager:
     detail_connections: dict[str, set[asyncio.Queue]] = dataclasses.field(
         default_factory=functools.partial(collections.defaultdict, set)
     )
+
+    def create_job(self, downloader: YouTubeDownloader) -> "DownloadJob":
+        jobid = secrets.token_urlsafe(8)
+        while jobid in self.jobs:
+            # we should never get duplicates, but just in case
+            jobid = secrets.token_urlsafe(8)
+        if not downloader.staging_directory:
+            downloader.staging_directory = pathlib.Path("staging") / jobid
+        self.jobs[jobid] = DownloadJob(jobid, downloader=downloader)
+        return self.jobs[jobid]
 
     async def publish(self, message: Any) -> None:
         for connection in self.connections:
