@@ -20,4 +20,29 @@ url = "discord://webhook_id/webhook_token"
 # moombox broadcasts notifications based on tags.
 # Tags have a category prefix:
 #   - 'status' prefix are for notifications sent on download task status change
-tags = [ "status:downloading", "status:finished", "status:error" ]
+#   - 'monitor-feed' prefix for when upcoming streams matching criteria are detected
+tags = [ "status:downloading", "status:finished", "status:error", "monitor-feed:found" ]
+
+[[channels]]
+# moombox is able to poll the RSS feed for upcoming streams with title / description matches.
+# 
+# Feeds are currently polled every 10 minutes and will always reflect the current version of the
+# configuration file.
+id = "UCW5uhrG1eCBYditmhL0Ykjw"
+
+# A friendly name may be specified for notifications; otherwise it will use the channel name.
+name = "Elizabeth Rose Bloodflame"
+
+# The 'terms' table maps key phrases to regular expressions to scan for in upcoming streams'
+# titles and descriptions.  Notifications will indicate which terms are present.
+# 
+# IMPORTANT:  If no terms are provided, no streams will be automatically downloaded!  To
+# download every stream, use a wildcard entry `terms."(all)" = '(.*)'`.
+terms."karaoke" = '(?i)(\W|^)karaoke'
+terms."unarchived" = '(?i)(\W|^)unar?chived?'
+terms."rebroadcast" = '(?i)(\W|^)re-?broadcast'
+
+# Determines how many older video items to scan through to identify lines that are unique to
+# a given video.  This attempts to reduce false positives when a streamer uses some default
+# boilerplate that includes keyword matches.
+num_desc_lookbehind = 2

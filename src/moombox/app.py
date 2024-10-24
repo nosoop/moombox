@@ -13,6 +13,7 @@ from moonarchive.downloaders.youtube import YouTubeDownloader
 from . import extractor
 from .config import ConfigManager
 from .database import database_ctx
+from .feed_monitor import monitor_daemon
 from .notifications import NotificationManager
 from .tasks import DownloadJob, DownloadManager, manager_ctx
 
@@ -97,6 +98,7 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
 
     @app.before_serving
     async def startup() -> None:
+        app.add_background_task(monitor_daemon)
         app.add_background_task(notificationmgr.run)
         app.add_background_task(cfgmgr.monitor_path)
 

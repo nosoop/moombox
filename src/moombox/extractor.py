@@ -49,6 +49,11 @@ class YouTubeVideoDetails(msgspec.Struct, rename="camel"):
     author: str
     channel_id: str
     thumbnail: YouTubeVideoThumbnailList
+    is_live: bool | None = (
+        False  # whether or not the content is currently being shown in real-time
+    )
+    is_live_content: bool | None = False  # whether or not this video was a live broadcast
+    is_upcoming: bool | None = False  # if a future stream
 
     @property
     def thumbnails(self) -> list[YouTubeVideoThumbnail]:
