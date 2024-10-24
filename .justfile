@@ -4,5 +4,5 @@ test:
   pytest tests
 
 format:
-  ruff check src --select I001 --fix
-  ruff format src
+  ruff check src tests --select I001 --fix
+  ruff format src tests
