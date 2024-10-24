@@ -128,7 +128,7 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
         if video_id:
             video_response = await extractor.fetch_youtube_player_response(video_id)
             if video_response:
-                if video_response and video_response.video_details:
+                if video_response.video_details:
                     job.video_id = video_response.video_details.video_id
                     job.author = video_response.video_details.author
                     job.channel_id = video_response.video_details.channel_id
