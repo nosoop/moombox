@@ -16,6 +16,7 @@ class NotificationConfig(msgspec.Struct):
 
 
 class AppConfig(msgspec.Struct):
+    log_level: int = 30
     notifications: list[NotificationConfig] = msgspec.field(default_factory=list)
 
 
@@ -38,7 +39,7 @@ class ConfigManager(msgspec.Struct):
         while True:
             new_config_mtime = self.config_path.stat().st_mtime
             if config_mtime != new_config_mtime:
-                quart.current_app.logger.debug("Configuration file modified; parsing")
+                quart.current_app.logger.info("Configuration file modified; parsing")
                 config_mtime = new_config_mtime
                 try:
                     self.update_config()
