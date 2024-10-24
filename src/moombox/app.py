@@ -116,6 +116,9 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
         if not video_id:
             # we should probably raise a validation error here...
             pass
+        else:
+            # rewrite the target so we don't fetch it with unnecessary tracking params
+            target = f"https://youtu.be/{video_id}"
 
         output_directory = pathlib.Path("output")
         try:
