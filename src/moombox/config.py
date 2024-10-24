@@ -1,7 +1,10 @@
 #!/usr/bin/python3
 
 import asyncio
+import collections
 import pathlib
+import re
+import typing
 from contextvars import ContextVar
 
 import msgspec
@@ -13,14 +16,54 @@ cfgmgr_ctx: ContextVar["ConfigManager"] = ContextVar("cfgmgr")
 NonNegativeInt = typing.Annotated[int, msgspec.Meta(ge=0)]
 
 
+# map of 'terms' to expressions that match them
+PatternMap = dict[str, typing.Pattern]
+
+# type signature for msgspec decode hook
+TypeConversionMap = dict[typing.Type, typing.Callable]
+MsgspecDecodeHookCallable = typing.Callable[[typing.Type, typing.Any], typing.Any]
+
+
+# builds a function that takes a mapping of types to callables that can build them
+def build_decode_hook(conversions: TypeConversionMap) -> MsgspecDecodeHookCallable:
+    def dec_hook(type: typing.Type, obj: typing.Any) -> typing.Any:
+        if type in conversions:
+            return conversions[type](obj)
+        raise NotImplementedError(f"Objects of type {type(obj)} are not supported")
+
+    return dec_hook
+
+
+_config_decode_hook = build_decode_hook(
+    {
+        typing.Pattern: re.compile,
+    }
+)
+
+
 class NotificationConfig(msgspec.Struct):
     url: str
     tags: list[str] = msgspec.field(default_factory=list)
 
 
+class YouTubeChannelMonitorConfig(msgspec.Struct):
+    id: str
+    num_desc_lookbehind: NonNegativeInt = 2
+    name: str | None = None
+    terms: PatternMap = msgspec.field(default_factory=PatternMap)
+
+
 class AppConfig(msgspec.Struct):
     log_level: NonNegativeInt = 30
     notifications: list[NotificationConfig] = msgspec.field(default_factory=list)
+    channels: list[YouTubeChannelMonitorConfig] = msgspec.field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        channel_dupes = set(
+            c for c, n in collections.Counter(c.id for c in self.channels).items() if n > 1
+        )
+        if channel_dupes:
+            raise ValueError(f"Duplicate YouTube channels in config: {channel_dupes}")
 
 
 class ConfigManager(msgspec.Struct):
@@ -54,7 +97,9 @@ class ConfigManager(msgspec.Struct):
             await asyncio.sleep(10)
 
     def update_config(self) -> None:
-        self.config = msgspec.toml.decode(self.config_path.read_bytes(), type=AppConfig)
+        self.config = msgspec.toml.decode(
+            self.config_path.read_bytes(), type=AppConfig, dec_hook=_config_decode_hook
+        )
         # mark config as updated for tasks
         self.notify()
 
