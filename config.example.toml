@@ -5,6 +5,10 @@
 # Note that many of the example values are system-dependent, so you should not be copying this
 # file and expecting it all to work.
 
+# Controls the granularity of logs displayed in the standard error stream (incl. Hypercorn).
+# The lower the value, the more verbose the log outputs.
+# Refer to the numeric values in https://docs.python.org/3/library/logging.html#logging-levels
+log_level = 30
 
 [[notifications]]
 # Notifications are handled by apprise, so refer to the supported notifications for the syntax:

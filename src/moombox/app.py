@@ -73,6 +73,7 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
     manager_ctx.set(manager)
 
     cfgmgr = ConfigManager(pathlib.Path(app.instance_path) / "config.toml")
+    app.logger.setLevel(cfgmgr.config.log_level)
 
     notificationmgr = NotificationManager()
 
@@ -90,7 +91,7 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
             # we do not provide any compatibility guarantees across versions, but we never clear
             # out the jobs from the database so they effectively will just be hidden
             manager.jobs[id] = msgspec.json.decode(previous_job, type=DownloadJob)
-            app.logger.info(f"Loaded job {id} from cache.")
+            app.logger.debug(f"Loaded job {id} from cache.")
         except msgspec.DecodeError as exc:
             app.logger.warning(f"Error loading job {id} from cache: {exc}")
 
