@@ -10,12 +10,16 @@ import quart
 cfgmgr_ctx: ContextVar["ConfigManager"] = ContextVar("cfgmgr")
 
 
+NonNegativeInt = typing.Annotated[int, msgspec.Meta(ge=0)]
+
+
 class NotificationConfig(msgspec.Struct):
     url: str
     tags: list[str] = msgspec.field(default_factory=list)
 
 
 class AppConfig(msgspec.Struct):
+    log_level: NonNegativeInt = 30
     notifications: list[NotificationConfig] = msgspec.field(default_factory=list)
 
 
@@ -38,7 +42,7 @@ class ConfigManager(msgspec.Struct):
         while True:
             new_config_mtime = self.config_path.stat().st_mtime
             if config_mtime != new_config_mtime:
-                quart.current_app.logger.debug("Configuration file modified; parsing")
+                quart.current_app.logger.info("Configuration file modified; parsing")
                 config_mtime = new_config_mtime
                 try:
                     self.update_config()
