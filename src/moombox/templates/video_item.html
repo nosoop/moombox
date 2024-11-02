@@ -1,9 +1,9 @@
 <div id="job_{{video_item.id}}" class="video-item" hx-swap-oob="morph">
   <div class="thumb">
     {% if video_item.thumbnail_url %}
-    <img src="{{ video_item.thumbnail_url }}" />
+    <img src="{{ video_item.thumbnail_url }}" referrerpolicy="no-referrer" />
     {% else %}
-    <img src="https://i.ytimg.com/vi/{{video_item.video_id}}/maxresdefault.jpg" />
+    <img src="https://i.ytimg.com/vi/{{video_item.video_id}}/maxresdefault.jpg" referrerpolicy="no-referrer" />
     {% endif %}
   </div>
   <div>
