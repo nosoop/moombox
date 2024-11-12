@@ -18,6 +18,7 @@ from moonarchive.downloaders.youtube import YouTubeDownloader
 from moonarchive.models.youtube_player import YTPlayerMediaType
 from moonarchive.output import BaseMessageHandler
 
+from .config import cfgmgr_ctx
 from .database import database_ctx
 from .notifications import apobj_ctx
 
@@ -41,6 +42,12 @@ class DownloadManager:
             jobid = secrets.token_urlsafe(8)
         if not downloader.staging_directory:
             downloader.staging_directory = pathlib.Path("staging") / jobid
+
+        cfgmgr = cfgmgr_ctx.get(None)
+        if cfgmgr:
+            if not downloader.ffmpeg_path:
+                downloader.ffmpeg_path = cfgmgr.config.downloader.ffmpeg_path
+
         self.jobs[jobid] = DownloadJob(jobid, downloader=downloader)
         return self.jobs[jobid]
 

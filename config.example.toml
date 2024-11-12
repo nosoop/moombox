@@ -10,6 +10,17 @@
 # Refer to the numeric values in https://docs.python.org/3/library/logging.html#logging-levels
 log_level = 30
 
+[downloader]
+# Controls options within moonarchive, the underlying downloading tool.
+# Changes to the downloader options will only take effect on new downloads.
+
+# Overrides the ffmpeg binary used for muxing outputs.
+# Omitting this uses the ffmpeg resolved by PATH.
+ffmpeg_path = "/opt/ffmpeg-custom/bin/ffmpeg"
+
+# On Windows, use single quotes to ensure backslashes aren't treated as escape sequences:
+# ffmpeg_path = 'C:\ffmpeg-7.1-full_build\bin\ffmpeg.exe'
+
 [[notifications]]
 # Notifications are handled by apprise, so refer to the supported notifications for the syntax:
 # https://github.com/caronc/apprise?tab=readme-ov-file#supported-notifications
