@@ -224,8 +224,8 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
     """
     app = quart.Quart(
         __name__,
-        instance_path = os.getenv("MOOMBOX_INSTANCE_PATH"),
-        instance_relative_config=True
+        instance_path=os.getenv("MOOMBOX_INSTANCE_PATH"),
+        instance_relative_config=True,
     )
     app.config.from_mapping(
         SECRET_KEY="dev",
