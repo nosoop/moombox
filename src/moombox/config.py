@@ -4,6 +4,7 @@ import asyncio
 import collections
 import pathlib
 import re
+import shutil
 import typing
 from contextvars import ContextVar
 
@@ -37,6 +38,7 @@ def build_decode_hook(conversions: TypeConversionMap) -> MsgspecDecodeHookCallab
 _config_decode_hook = build_decode_hook(
     {
         typing.Pattern: re.compile,
+        pathlib.Path: pathlib.Path,
     }
 )
 
@@ -53,8 +55,22 @@ class YouTubeChannelMonitorConfig(msgspec.Struct):
     terms: PatternMap = msgspec.field(default_factory=PatternMap)
 
 
+class DownloaderConfig(msgspec.Struct):
+    ffmpeg_path: pathlib.Path | None = None
+
+    def __post_init__(self) -> None:
+        if self.ffmpeg_path:
+            if not self.ffmpeg_path.exists():
+                raise ValueError(f"ffmpeg does not exist at {self.ffmpeg_path}")
+            elif not shutil.which("ffmpeg", path=self.ffmpeg_path.parent):
+                raise ValueError(f"ffmpeg at {self.ffmpeg_path} is not executable")
+        elif not shutil.which("ffmpeg"):
+            raise ValueError("Could not find a working installation of ffmpeg")
+
+
 class AppConfig(msgspec.Struct):
     log_level: NonNegativeInt = 30
+    downloader: DownloaderConfig = msgspec.field(default_factory=DownloaderConfig)
     notifications: list[NotificationConfig] = msgspec.field(default_factory=list)
     channels: list[YouTubeChannelMonitorConfig] = msgspec.field(default_factory=list)
 
