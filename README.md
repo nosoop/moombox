@@ -34,7 +34,7 @@ The current iteration of the container uses `ffmpeg` as it's available in Debian
 
 ```sh
 # the working directory is set to '/data' in the application
-podman run -p 5000:5000 -v /opt/moombox:/data ghcr.io/nosoop/moombox:latest
+podman run -p 5000:5000 -v /opt/moombox:/data ghcr.io/nosoop/moombox:main
 ```
 
 You must mount a writable path on the host to `/data` so moombox can generate `/data/staging`
