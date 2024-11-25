@@ -47,6 +47,10 @@ class DownloadManager:
         if cfgmgr:
             if not downloader.ffmpeg_path:
                 downloader.ffmpeg_path = cfgmgr.config.downloader.ffmpeg_path
+            if not downloader.po_token:
+                downloader.po_token = cfgmgr.config.downloader.po_token
+            if not downloader.visitor_data:
+                downloader.visitor_data = cfgmgr.config.downloader.visitor_data
 
         self.jobs[jobid] = DownloadJob(jobid, downloader=downloader)
         return self.jobs[jobid]

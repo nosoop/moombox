@@ -21,6 +21,13 @@ ffmpeg_path = "/opt/ffmpeg-custom/bin/ffmpeg"
 # On Windows, use single quotes to ensure backslashes aren't treated as escape sequences:
 # ffmpeg_path = 'C:\ffmpeg-7.1-full_build\bin\ffmpeg.exe'
 
+# Use proof-of-origin when making requests.
+# See https://github.com/nosoop/moonarchive?tab=readme-ov-file#proof-of-origin-downloads
+# Visitor data is expected to have escaped "%3D" sequences in place of "=", while POTokens have
+# "=" directly.
+po_token = "long-base64-encoded-value-here"
+visitor_data = "shorter-escaped-base64-value-here"
+
 [[notifications]]
 # Notifications are handled by apprise, so refer to the supported notifications for the syntax:
 # https://github.com/caronc/apprise?tab=readme-ov-file#supported-notifications

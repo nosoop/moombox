@@ -4,8 +4,11 @@ import asyncio
 import base64
 import datetime
 import functools
+import html.parser
+import json
 import pathlib
 import urllib.parse
+from typing import Type
 from urllib.parse import ParseResult as URLParseResult
 
 import httpx
@@ -109,6 +112,112 @@ class YouTubePlayerResponse(msgspec.Struct, rename="camel"):
     playability_status: YouTubePlayabilityStatus | None = None
 
 
+class YouTubeClientConfig(msgspec.Struct, rename="camel", kw_only=True):
+    delegated_session_id: str | None = msgspec.field(name="DELEGATED_SESSION_ID", default=None)
+    id_token: str | None = msgspec.field(name="ID_TOKEN", default=None)
+    hl: str = msgspec.field(name="HL")
+    innertube_api_key: str = msgspec.field(name="INNERTUBE_API_KEY")
+    innertube_client_name: str = msgspec.field(name="INNERTUBE_CLIENT_NAME")
+    innertube_client_version: str = msgspec.field(name="INNERTUBE_CLIENT_VERSION")
+    innertube_ctx_client_name: int = msgspec.field(name="INNERTUBE_CONTEXT_CLIENT_NAME")
+    innertube_ctx_client_version: str = msgspec.field(name="INNERTUBE_CONTEXT_CLIENT_VERSION")
+    session_index: str | None = msgspec.field(name="SESSION_INDEX", default=None)
+    visitor_data: str = msgspec.field(name="VISITOR_DATA")
+
+    def to_headers(self) -> dict[str, str]:
+        headers = {
+            "X-YouTube-Client-Name": str(self.innertube_ctx_client_name),
+            "X-YouTube-Client-Version": self.innertube_client_version,
+        }
+        if self.visitor_data:
+            headers["X-Goog-Visitor-Id"] = self.visitor_data
+        if self.session_index:
+            headers["X-Goog-AuthUser"] = self.visitor_data
+        if self.delegated_session_id:
+            headers["X-Goog-PageId"] = self.delegated_session_id
+        if self.id_token:
+            headers["X-Youtube-Identity-Token"] = self.id_token
+        return headers
+
+    def to_post_context(self) -> dict[str, str]:
+        post_context = {
+            "clientName": self.innertube_client_name,
+            "clientVersion": self.innertube_client_version,
+        }
+        if self.visitor_data:
+            post_context["visitorData"] = self.visitor_data
+        return post_context
+
+
+def create_json_object_extractor(decl: str) -> Type[html.parser.HTMLParser]:
+    class InternalHTMLParser(html.parser.HTMLParser):
+        in_script: bool = False
+        result = None
+
+        def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+            self.in_script = tag == "script"
+
+        def handle_endtag(self, tag: str) -> None:
+            self.in_script = False
+
+        def handle_data(self, data: str) -> None:
+            if not self.in_script:
+                return
+
+            decl_pos = data.find(decl)
+            if decl_pos == -1:
+                return
+
+            # we'll just let the decoder throw to determine where the data ends
+            start_pos = data[decl_pos:].find("{") + decl_pos
+            try:
+                self.result = json.loads(data[start_pos:])
+            except json.JSONDecodeError as e:
+                self.result = json.loads(data[start_pos : start_pos + e.pos])
+
+    return InternalHTMLParser
+
+
+PlayerResponseExtractor = create_json_object_extractor("var ytInitialPlayerResponse =")
+YTCFGExtractor = create_json_object_extractor('ytcfg.set({"CLIENT')
+
+_ytcfg_cache: YouTubeClientConfig | None = None
+_ytcfg_cache_dt: datetime.datetime | None = None
+
+
+async def _extract_yt_cfg() -> YouTubeClientConfig:
+    # scrapes the home page and returns a current YouTubeClientConfig
+    response_extractor = YTCFGExtractor()
+    async with httpx.AsyncClient(follow_redirects=True) as client:
+        for n in range(5):
+            try:
+                r = await client.get("https://youtube.com/")
+                response_extractor.feed(r.text)
+                break
+            except httpx.HTTPError:
+                await asyncio.sleep(6)
+
+        if not response_extractor.result:  # type: ignore
+            raise ValueError("Could not extract YouTubeClientConfig response")
+        return msgspec.convert(response_extractor.result, type=YouTubeClientConfig)  # type: ignore
+
+
+async def _get_yt_cfg() -> YouTubeClientConfig:
+    # attempts to retrieve the latest available web client information
+    # here we don't care about proof-of-origin data since YouTube will still offer video info
+    # without it
+    global _ytcfg_cache
+    global _ytcfg_cache_dt
+
+    max_age = datetime.timedelta(hours=4)
+    now = datetime.datetime.now(tz=datetime.UTC)
+    if _ytcfg_cache and _ytcfg_cache_dt and now - _ytcfg_cache_dt < max_age:
+        return _ytcfg_cache
+    _ytcfg_cache = await _extract_yt_cfg()
+    _ytcfg_cache_dt = now  # off by however long extraction takes but relatively small
+    return _ytcfg_cache
+
+
 def extract_video_id_from_string(url_or_id: str) -> str | None:
     # extracts the YouTube video ID from a URL (either string or raw ID)
     # we do this to try and avoid having to scrape a page for the result
@@ -140,34 +249,29 @@ def extract_video_id_from_string(url_or_id: str) -> str | None:
 
 
 async def fetch_youtube_player_response(video_id: str) -> YouTubePlayerResponse | None:
+    ytcfg = await _get_yt_cfg()
     params = {
-        "key": base64.urlsafe_b64decode(INNERTUBE_ANDROID_KEY_ENC),
+        "key": ytcfg.innertube_api_key or base64.urlsafe_b64decode(INNERTUBE_ANDROID_KEY_ENC),
     }
 
     headers = {
-        "X-YouTube-Client-Name": "3",
-        "X-YouTube-Client-Version": "19.09.37",
+        "X-YouTube-Client-Name": "1",
+        "X-YouTube-Client-Version": "2.20241121.01.00",
         "Origin": "https://www.youtube.com",
         "content-type": "application/json",
-    }
+    } | ytcfg.to_headers()
 
     payload = {
         "context": {
             "client": {
-                "clientName": "ANDROID",
-                "clientVersion": "19.09.37",
+                "clientName": "WEB",
+                "clientVersion": "2.20241121.01.00",
                 "hl": "en",
             }
+            | ytcfg.to_post_context()
         },
         "videoId": video_id,
-        "params": "CgIQBg==",
-        "playbackContext": {
-            "contentPlaybackContext": {
-                "html5Preference": "HTML5_PREF_WANTS",
-            }
-        },
-        "contentCheckOk": True,
-        "racyCheckOk": True,
+        "playbackContext": {"contentPlaybackContext": {"html5Preference": "HTML5_PREF_WANTS"}},
     }
 
     async with httpx.AsyncClient() as client:

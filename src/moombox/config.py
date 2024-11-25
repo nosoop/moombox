@@ -57,6 +57,8 @@ class YouTubeChannelMonitorConfig(msgspec.Struct):
 
 class DownloaderConfig(msgspec.Struct):
     ffmpeg_path: pathlib.Path | None = None
+    po_token: str | None = None
+    visitor_data: str | None = None
 
     def __post_init__(self) -> None:
         if self.ffmpeg_path:
