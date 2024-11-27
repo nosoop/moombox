@@ -14,6 +14,7 @@ import quart
 cfgmgr_ctx: ContextVar["ConfigManager"] = ContextVar("cfgmgr")
 
 
+PositiveInt = typing.Annotated[int, msgspec.Meta(gt=0)]
 NonNegativeInt = typing.Annotated[int, msgspec.Meta(ge=0)]
 
 
@@ -55,7 +56,8 @@ class YouTubeChannelMonitorConfig(msgspec.Struct):
     terms: PatternMap = msgspec.field(default_factory=PatternMap)
 
 
-class DownloaderConfig(msgspec.Struct):
+class DownloaderConfig(msgspec.Struct, kw_only=True):
+    num_parallel_downloads: PositiveInt = 1
     ffmpeg_path: pathlib.Path | None = None
     po_token: str | None = None
     visitor_data: str | None = None

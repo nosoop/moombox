@@ -107,6 +107,7 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
         return await quart.render_template(
             "index.html",
             download_manager=manager.jobs.values(),
+            cfgmgr=cfgmgr,
         )
 
     @app.post("/add")

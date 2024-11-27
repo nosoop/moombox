@@ -125,6 +125,7 @@ async def schedule_feed_match(match: FeedItemMatch) -> None:
     except (ValueError, OSError):
         pass
 
+    cfgmgr = cfgmgr_ctx.get()
     downloader = YouTubeDownloader(
         url=match.url,
         poll_interval=300,
@@ -135,7 +136,7 @@ async def schedule_feed_match(match: FeedItemMatch) -> None:
         staging_directory=None,
         prioritize_vp9=True,
         cookie_file=None,
-        num_parallel_downloads=10,
+        num_parallel_downloads=cfgmgr.config.downloader.num_parallel_downloads,
     )
 
     job = manager.create_job(downloader)

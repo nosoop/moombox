@@ -9,7 +9,7 @@
         <sl-checkbox name="download_thumbnail" checked>Download thumbnail</sl-checkbox>
         <sl-checkbox name="download_description" checked>Download description</sl-checkbox>
         <sl-checkbox name="prefer_vp9" checked>Prefer VP9 over H264 at equivalent resolution</sl-checkbox>
-        <sl-input type="number" label="Concurrent stream download jobs" name="num_jobs" min="1" value="10" step="1" defaultValue="10"></sl-input>
+        <sl-input type="number" label="Concurrent stream download jobs" name="num_jobs" min="1" value="{{- cfgmgr.config.downloader.num_parallel_downloads -}}" step="1"></sl-input>
       </sl-details>
       <sl-button slot="footer" variant="primary" type="submit" id="add-video" style="width: 100%;">Add</sl-button>
     </sl-dialog>
