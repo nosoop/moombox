@@ -8,6 +8,7 @@ import enum
 import functools
 import pathlib
 import secrets
+import traceback
 from contextvars import ContextVar
 from typing import Any, AsyncGenerator, NamedTuple
 
@@ -209,6 +210,7 @@ class DownloadJob(BaseMessageHandler):
             except Exception as exc:
                 self.status = DownloadStatus.ERROR
                 self.append_message(f"Exception: {exc=}")
+                self.append_message(traceback.format_exc())
                 self.broadcast_status_update()
 
                 database = database_ctx.get()
