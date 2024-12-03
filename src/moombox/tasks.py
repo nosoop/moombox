@@ -208,8 +208,19 @@ class DownloadJob(BaseMessageHandler):
                 await self.downloader.async_run()
             except Exception as exc:
                 self.status = DownloadStatus.ERROR
-                self.broadcast_status_update()
                 self.append_message(f"Exception: {exc=}")
+                self.broadcast_status_update()
+
+                database = database_ctx.get()
+                if database:
+                    database.execute(
+                        "INSERT OR IGNORE INTO jobs (id, payload) VALUES (?, ?)",
+                        (
+                            self.id,
+                            msgspec.json.encode(msgspec.structs.replace(self, downloader=None)),
+                        ),
+                    )
+                    database.commit()
 
     def append_message(self, message: str) -> None:
         self.message_log.append(
