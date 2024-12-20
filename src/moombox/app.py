@@ -225,6 +225,19 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
                 await quart.render_template("video_item.html", video_item=message)
             )
 
+    @app.put("/config")
+    async def update_config() -> str:
+        try:
+            form = await quart.request.form
+            cfgmgr.save_config(form["config"])
+            message = "Changes saved"
+        except (msgspec.ValidationError, msgspec.DecodeError) as exc:
+            quart.current_app.logger.error(exc)
+            message = str(exc)
+        return await quart.render_template(
+            "panel_config_apply.html", cfgmgr=cfgmgr, config_message=message
+        )
+
     @app.template_filter("human_size")
     def _sizeof_fmt(num: int | float, suffix: str = "B") -> str:
         # https://stackoverflow.com/a/1094933

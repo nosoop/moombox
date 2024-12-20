@@ -123,6 +123,15 @@ class ConfigManager(msgspec.Struct):
         # mark config as updated for tasks
         self.notify()
 
+    def save_config(self, data: str) -> None:
+        if self.read_only:
+            raise ValueError("Configuration file is read-only.")
+        try:
+            msgspec.toml.decode(data, type=AppConfig, dec_hook=_config_decode_hook)
+            self.config_path.write_text(data, "utf8")
+        except (OSError, msgspec.ValidationError, msgspec.DecodeError) as exc:
+            raise exc
+
     def get_modified_flag(self) -> asyncio.Event:
         """
         Returns an event object that a coroutine can use to track changes in the configuration.
@@ -136,3 +145,7 @@ class ConfigManager(msgspec.Struct):
     def notify(self) -> None:
         for event in self.update_events:
             event.set()
+
+    @property
+    def read_only(self) -> bool:
+        return not self.config_path.exists() or not os.access(self.config_path, os.R_OK)

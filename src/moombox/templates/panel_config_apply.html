@@ -1,0 +1,6 @@
+<span id="config-message" hx-swap-oob="true">
+  {% if config_message %}
+    {{ config_message }}
+  {% endif %}
+  {% if cfgmgr.read_only %}Configuration file is read-only.{% endif %}
+</span>

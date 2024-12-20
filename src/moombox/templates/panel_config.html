@@ -1,0 +1,26 @@
+<sl-tab slot="nav" panel="config">Configuration</sl-tab>
+<sl-tab-panel name="config">
+  <div id="config-panel">
+    <form id="config-post" hx-put="/config" hx-swap="none">
+      <sl-button id="configrestore" disabled>Restore file to last save</sl-button>
+      <sl-button id="configapply" type="submit" disabled>Validate and apply changes</sl-button>
+      {% include "panel_config_apply.html" %}
+    </form>
+    <sl-textarea id="configtext" name="config" form="config-post" resize="auto" label="Configuration file:" value="{{- cfgmgr.config_path.read_text('utf8') -}}" {% if cfgmgr.read_only %}disabled{% endif %}></sl-textarea>
+  </div>
+  
+  <script>
+    const configtextarea = document.querySelector("#configtext");
+    const configrestore = document.querySelector("#configrestore");
+    const configapply = document.querySelector("#configapply");
+    configtextarea.addEventListener("sl-input", event => {
+      configrestore.removeAttribute("disabled");
+      configapply.removeAttribute("disabled");
+    });
+    configrestore.addEventListener("click", event => {
+      configtextarea.value = configtextarea.defaultValue;
+      configrestore.setAttribute("disabled", "");
+      configapply.setAttribute("disabled", "");
+    });
+  </script>
+</sl-tab-panel>

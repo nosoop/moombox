@@ -130,3 +130,20 @@ sl-details::part(content) {
 .job-progress-info {
   align-self: center;
 }
+#configtext::part(textarea) {
+  font-family: var(--sl-font-mono);
+  font-size: var(--sl-font-size-small);
+}
+#config-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sl-spacing-medium);
+}
+#config-post {
+  display: flex;
+  gap: var(--sl-spacing-x-small);
+}
+#config-message {
+  font-size: var(--sl-button-font-size-medium);
+  align-self: center;
+}
