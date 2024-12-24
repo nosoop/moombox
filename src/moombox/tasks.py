@@ -16,6 +16,7 @@ import moonarchive.models.messages as msgtypes
 import msgspec
 import quart
 from moonarchive.downloaders.youtube import YouTubeDownloader
+from moonarchive.models.ffmpeg import FFMPEGProgress
 from moonarchive.models.youtube_player import YTPlayerMediaType
 from moonarchive.output import BaseMessageHandler
 
@@ -106,6 +107,7 @@ class DownloadManifestProgress(msgspec.Struct):
     audio_seq: int = 0
     max_seq: int = 0
     total_downloaded: int = 0
+    output: FFMPEGProgress = msgspec.field(default_factory=FFMPEGProgress)
 
 
 class DownloadJob(BaseMessageHandler):
@@ -190,6 +192,8 @@ class DownloadJob(BaseMessageHandler):
                     )
             case msg if isinstance(msg, msgtypes.StringMessage):
                 self.append_message(msg.text)
+            case msg if isinstance(msg, msgtypes.StreamMuxProgressMessage):
+                self.manifest_progress[msg.manifest_id].output = msg.progress
             case _:
                 pass
 
