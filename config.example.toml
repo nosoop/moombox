@@ -15,14 +15,14 @@ log_level = 30
 # Changes to the downloader options will only take effect on new downloads.
 
 # Overrides the ffmpeg binary used for muxing outputs.
-# Omitting this uses the ffmpeg resolved by PATH.
+# Omitting this uses the ffmpeg resolved by PATH.  The uncommented path below is a Linux path:
 ffmpeg_path = "/opt/ffmpeg-custom/bin/ffmpeg"
 
 # On Windows, use single quotes to ensure backslashes aren't treated as escape sequences:
 # ffmpeg_path = 'C:\ffmpeg-7.1-full_build\bin\ffmpeg.exe'
 
-# Maximum number of downloads to have in-flight for each stream (each broadcast has at least
-# one video and one audio stream).
+# Maximum number of fragment downloads to have in-flight for each stream (each broadcast has at
+# least one video and one audio stream).
 num_parallel_downloads = 1
 
 # Use proof-of-origin when making requests.
@@ -64,7 +64,7 @@ terms."karaoke" = '(?i)(\W|^)karaoke'
 terms."unarchived" = '(?i)(\W|^)unar?chived?'
 terms."rebroadcast" = '(?i)(\W|^)re-?broadcast'
 
-# Determines how many older video items to scan through to identify lines that are unique to
-# a given video.  This attempts to reduce false positives when a streamer uses some default
-# boilerplate that includes keyword matches.
+# Determines how many older video items to scan through to identify description lines that are
+# unique to a given video.  This attempts to reduce false positives when a streamer uses some
+# default boilerplate that includes keyword matches.
 num_desc_lookbehind = 2
