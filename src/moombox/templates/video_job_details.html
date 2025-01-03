@@ -40,6 +40,14 @@
         </textarea>
       </div>
     </div>
+    <div id="video-healthcheck">
+      Upstream video status:
+      <sl-icon-button hx-post="{{ url_for('request_status_update', id=video_item.id) }}" hx-swap="none" name="arrow-clockwise"></sl-icon-button>
+      <span id="video-healthcheck-status">{{ video_item.healthcheck.result }}</span>
+      {% if video_item.healthcheck.last_update %}
+      (last checked <sl-relative-time date="{{ video_item.healthcheck.last_update }}" sync></sl-relative-time>)
+      {% endif %}
+    </div>
     {% if video_item.can_delete_tempfiles %}
     <div id="danger-zone">
       <small>Danger zone:</small>

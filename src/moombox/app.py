@@ -198,6 +198,14 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
             video_item=manager.jobs[id],
         )
 
+    @app.post("/job/<id>/healthcheck")
+    async def request_status_update(id: str) -> str:
+        if id not in manager.jobs:
+            quart.abort(404, "Task not found")
+        job = manager.jobs[id]
+        quart.current_app.add_background_task(job.run_healthcheck)
+        return ""
+
     @app.websocket("/ws/job/<id>")
     async def stream_job_info(id: str) -> None:
         if id not in manager.jobs:

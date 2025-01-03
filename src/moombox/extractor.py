@@ -51,12 +51,17 @@ class YouTubeVideoDetails(msgspec.Struct, rename="camel"):
     title: str
     author: str
     channel_id: str
+    length_seconds: str
     thumbnail: YouTubeVideoThumbnailList
     is_live: bool | None = (
         False  # whether or not the content is currently being shown in real-time
     )
     is_live_content: bool | None = False  # whether or not this video was a live broadcast
     is_upcoming: bool | None = False  # if a future stream
+
+    @property
+    def video_duration(self) -> int:
+        return int(self.length_seconds)
 
     @property
     def thumbnails(self) -> list[YouTubeVideoThumbnail]:
@@ -92,6 +97,7 @@ class YouTubeLiveStreamability(msgspec.Struct, rename="camel"):
 
 
 class YouTubePlayabilityStatus(msgspec.Struct, rename="camel"):
+    status: str
     live_streamability: YouTubeLiveStreamability | None = None
 
     @property
@@ -107,9 +113,39 @@ class YouTubePlayabilityStatus(msgspec.Struct, rename="camel"):
         return self.live_streamability.live_streamability_renderer.offline_slate.live_stream_offline_slate_renderer.scheduled_start_datetime
 
 
+class YouTubeVideoBroadcastDetails(msgspec.Struct, rename="camel"):
+    start_timestamp: datetime.datetime | None = None
+    end_timestamp: datetime.datetime | None = None
+    is_live_now: bool = False
+
+    @property
+    def estimated_duration(self) -> int | None:
+        if not self.start_timestamp:
+            return None
+        elif not self.end_timestamp:
+            return None
+        return int((self.end_timestamp - self.start_timestamp).total_seconds())
+
+
+class YouTubeVideoMicroformatRenderer(msgspec.Struct, rename="camel"):
+    live_broadcast_details: YouTubeVideoBroadcastDetails | None = None
+
+
+class YouTubeVideoMicroformat(msgspec.Struct, rename="camel"):
+    player_microformat_renderer: YouTubeVideoMicroformatRenderer | None = None
+
+    def __getattr__(self, name: str):
+        # proxy attribute accesses to the renderer
+        return getattr(self.player_microformat_renderer, name)
+
+    def __bool__(self) -> bool:
+        return bool(self.player_microformat_renderer)
+
+
 class YouTubePlayerResponse(msgspec.Struct, rename="camel"):
     video_details: YouTubeVideoDetails | None = None
     playability_status: YouTubePlayabilityStatus | None = None
+    microformat: YouTubeVideoMicroformat | None = None
 
 
 class YouTubeClientConfig(msgspec.Struct, rename="camel", kw_only=True):
@@ -248,7 +284,9 @@ def extract_video_id_from_string(url_or_id: str) -> str | None:
     return None
 
 
-async def fetch_youtube_player_response(video_id: str) -> YouTubePlayerResponse | None:
+async def fetch_youtube_player_response(
+    video_id: str, validate: bool = True
+) -> YouTubePlayerResponse | None:
     ytcfg = await _get_yt_cfg()
     params = {
         "key": ytcfg.innertube_api_key or base64.urlsafe_b64decode(INNERTUBE_ANDROID_KEY_ENC),
@@ -284,6 +322,10 @@ async def fetch_youtube_player_response(video_id: str) -> YouTubePlayerResponse 
                 json=payload,
             )
             response = msgspec.convert(r.json(), type=YouTubePlayerResponse)
+            if not validate:
+                # normally we fetch the response for upcoming or currently live streams
+                # bypassing validation means we return a response for private videos too
+                return response
             if response.video_details and response.video_details.video_id == video_id:
                 return response
             await asyncio.sleep(10)

@@ -22,6 +22,7 @@ from moonarchive.output import BaseMessageHandler
 
 from .config import cfgmgr_ctx
 from .database import database_ctx
+from .extractor import fetch_youtube_player_response
 from .notifications import apobj_ctx
 
 
@@ -110,6 +111,28 @@ class DownloadManifestProgress(msgspec.Struct):
     output: FFMPEGProgress = msgspec.field(default_factory=FFMPEGProgress)
 
 
+class HealthCheckResult(enum.StrEnum):
+    # no problems
+    OK = "OK"
+
+    # general failure to perform health check
+    HEALTHCHECK_FAILURE = "HEALTHCHECK_FAILURE"
+
+    # video was made private
+    VIDEO_UNAVAILABLE = "VIDEO_UNAVAILABLE"
+
+    # stream duration differs significantly (content was likely cut)
+    STREAM_LENGTH_DIFFERS = "STREAM_LENGTH_DIFFERS"
+
+    # stream duration is indeterminate (multi-manifest stream)
+    STREAM_LENGTH_INDETERMINATE = "STREAM_LENGTH_INDETERMINATE"
+
+
+class HealthCheckStatus(msgspec.Struct):
+    result: HealthCheckResult | None = None
+    last_update: datetime.datetime | None = None
+
+
 class DownloadJob(BaseMessageHandler):
     id: str
 
@@ -128,6 +151,7 @@ class DownloadJob(BaseMessageHandler):
     manifest_progress: dict[str, DownloadManifestProgress] = msgspec.field(
         default_factory=functools.partial(collections.defaultdict, DownloadManifestProgress)
     )
+    healthcheck: HealthCheckStatus = msgspec.field(default_factory=HealthCheckStatus)
 
     async def handle_message(self, msg: msgtypes.BaseMessage) -> None:
         prev_status = self.status
@@ -244,6 +268,48 @@ class DownloadJob(BaseMessageHandler):
             tag=f"status:{self.status.lower()}",
         )
 
+    async def run_healthcheck(self) -> None:
+        """
+        Performs a health check on the source video to see if it was modified since the stream
+        was downloaded.
+        """
+        last_healthcheck_result = self.healthcheck.result
+        self.healthcheck.result = await self._fetch_health_status()
+        self.healthcheck.last_update = datetime.datetime.now(tz=datetime.UTC)
+        if last_healthcheck_result != self.healthcheck.result:
+            # TODO: notify on status change
+            pass
+        manager = manager_ctx.get()
+        if manager:
+            quart.current_app.add_background_task(manager.publish, self)
+            quart.current_app.add_background_task(manager.publish_detail, self.id, self)
+
+    async def _fetch_health_status(self) -> HealthCheckResult:
+        if not self.video_id:
+            return HealthCheckResult.HEALTHCHECK_FAILURE
+        elif self.downloaded_duration is None:
+            return HealthCheckResult.STREAM_LENGTH_INDETERMINATE
+
+        response = await fetch_youtube_player_response(self.video_id, False)
+        if not response or not response.playability_status:
+            return HealthCheckResult.HEALTHCHECK_FAILURE
+        if response.playability_status.status in ("LOGIN_REQUIRED",):
+            return HealthCheckResult.VIDEO_UNAVAILABLE
+        if response.video_details and response.video_details.is_live_content:
+            # skip checking duration on premieres
+            upstream_duration = response.video_details.video_duration
+            if abs(self.downloaded_duration - upstream_duration) > 1:
+                estimated_duration = None
+                if response.microformat and response.microformat.live_broadcast_details:
+                    estimated_duration = (
+                        response.microformat.live_broadcast_details.estimated_duration
+                    )
+                if estimated_duration and upstream_duration < estimated_duration:
+                    # if response's upstream is equal to estimated, then video may not be
+                    # finished processing
+                    return HealthCheckResult.STREAM_LENGTH_DIFFERS
+        return HealthCheckResult.OK
+
     def get_status(self) -> dict:
         return msgspec.to_builtins(msgspec.structs.replace(self, downloader=None))
 
@@ -260,9 +326,45 @@ class DownloadJob(BaseMessageHandler):
         return sum(prog.max_seq for prog in self.manifest_progress.values())
 
     @property
+    def downloaded_duration(self) -> int | None:
+        """
+        Returns the downloaded stream's final muxed duration in seconds, or None if the value
+        could not be determined.
+        """
+        if len(self.manifest_progress) != 1:
+            # Multi-manifest broadcasts have overlapping segments, so we can't reliably identify
+            # if an affected stream was cut with this alone.
+            #
+            # We *could* possibly determine this by performing analysis on the segment metadata
+            # and obtaining the union of segment ingest times, but that's far too much effort
+            # at this time.
+            return None
+        return (
+            int(sum(prog.output.out_time_us or 0 for prog in self.manifest_progress.values()))
+            // 1_000_000
+        )
+
+    @property
     def total_downloaded(self) -> int:
+        """
+        Returns the total number of bytes transferred.
+        """
         return sum(prog.total_downloaded for prog in self.manifest_progress.values())
 
     @property
+    def total_muxed(self) -> int:
+        """
+        Returns the total number of bytes in the final output.
+        """
+        return sum(prog.output.total_size or 0 for prog in self.manifest_progress.values())
+
+    @property
     def can_delete_tempfiles(self) -> bool:
-        return self.video_id is not None and self.status == DownloadStatus.FINISHED
+        if self.video_id is None:
+            return False
+        elif self.status != DownloadStatus.FINISHED:
+            return False
+        elif any(prog.output.total_size is None for prog in self.manifest_progress.values()):
+            # if any manifests have skipped outputs then we don't consider it safe for removal
+            return False
+        return True

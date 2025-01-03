@@ -147,3 +147,7 @@ sl-details::part(content) {
   font-size: var(--sl-button-font-size-medium);
   align-self: center;
 }
+#video-healthcheck sl-relative-time {
+  /* hides trailing whitespace text node */
+  display: inline-block;
+}
