@@ -22,12 +22,19 @@
         ({{video_item.total_downloaded | human_size}})
       </div>
     </div>
+    <div id="output-summary">
+      <div>
+        Output size:
+        <sl-format-number value="{{video_item.total_muxed}}"></sl-format-number> bytes
+        ({{video_item.total_muxed | human_size}})
+      </div>
+    </div>
     {% if video_item.manifest_progress %}
     <div id="manifest-breakdown">
       Manifest breakdown:
       <ul>
       {% for manifest, progress in video_item.manifest_progress.items() %}
-        <li><span class="manifest-id">{{manifest}}</span>: V: {{progress.video_seq + 1}} / A: {{progress.audio_seq + 1}} / T: {{progress.max_seq + 1}} / DL: {{progress.total_downloaded | human_size}}</li>
+        <li><span class="manifest-id">{{manifest}}</span>: V: {{progress.video_seq + 1}} / A: {{progress.audio_seq + 1}} / T: {{progress.max_seq + 1}} / DL: {{progress.total_downloaded | human_size}} {%- if progress.output.total_size %} / OUT: {{ progress.output.total_size | human_size }} {%- endif %}</li>
       {% endfor %}
       </ul>
     </div>
