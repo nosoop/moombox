@@ -15,7 +15,13 @@ from .config import ConfigManager
 from .database import database_ctx
 from .feed_monitor import monitor_daemon
 from .notifications import NotificationManager
-from .tasks import DownloadJob, DownloadManager, manager_ctx
+from .tasks import (
+    DownloadJob,
+    DownloadManager,
+    DownloadStatus,
+    downloadjob_decode_hook,
+    manager_ctx,
+)
 
 
 async def _update_job_details(job: DownloadJob, video_id: str) -> None:
@@ -91,7 +97,9 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
             #
             # we do not provide any compatibility guarantees across versions, but we never clear
             # out the jobs from the database so they effectively will just be hidden
-            manager.jobs[id] = msgspec.json.decode(previous_job, type=DownloadJob)
+            manager.jobs[id] = msgspec.json.decode(
+                previous_job, type=DownloadJob, dec_hook=downloadjob_decode_hook
+            )
             app.logger.debug(f"Loaded job {id} from cache.")
         except msgspec.DecodeError as exc:
             app.logger.warning(f"Error loading job {id} from cache: {exc}")

@@ -20,10 +20,24 @@ from moonarchive.models.ffmpeg import FFMPEGProgress
 from moonarchive.models.youtube_player import YTPlayerMediaType
 from moonarchive.output import BaseMessageHandler
 
-from .config import cfgmgr_ctx
+from .config import build_decode_hook, cfgmgr_ctx
 from .database import database_ctx
 from .extractor import fetch_youtube_player_response
 from .notifications import apobj_ctx
+
+downloadjob_decode_hook = build_decode_hook(
+    {
+        pathlib.Path: pathlib.Path,
+    }
+)
+
+
+def _downloadjob_encode_hook(obj: Any) -> str:
+    match obj:
+        case pathlib.Path():
+            return str(obj.resolve())
+        case _:
+            raise TypeError(f"Unsupported type {type(obj)}")
 
 
 @dataclasses.dataclass
@@ -158,6 +172,7 @@ class DownloadJob(BaseMessageHandler):
         default_factory=functools.partial(collections.defaultdict, DownloadManifestProgress)
     )
     healthcheck: HealthCheckStatus = msgspec.field(default_factory=HealthCheckStatus)
+    output_paths: set[pathlib.Path] = msgspec.field(default_factory=set)
 
     async def handle_message(self, msg: msgtypes.BaseMessage) -> None:
         prev_status = self.status
@@ -180,6 +195,7 @@ class DownloadJob(BaseMessageHandler):
             case msg if isinstance(msg, msgtypes.DownloadJobFinishedMessage):
                 self.status = DownloadStatus.FINISHED
                 self.append_message("Finished downloading")
+                self.output_paths = set(msg.output_paths)
 
                 database = database_ctx.get()
                 if database:
@@ -187,7 +203,10 @@ class DownloadJob(BaseMessageHandler):
                         "INSERT OR IGNORE INTO jobs (id, payload) VALUES (?, ?)",
                         (
                             self.id,
-                            msgspec.json.encode(msgspec.structs.replace(self, downloader=None)),
+                            msgspec.json.encode(
+                                msgspec.structs.replace(self, downloader=None),
+                                enc_hook=_downloadjob_encode_hook,
+                            ),
                         ),
                     )
                     database.commit()
@@ -253,7 +272,10 @@ class DownloadJob(BaseMessageHandler):
                         "INSERT OR IGNORE INTO jobs (id, payload) VALUES (?, ?)",
                         (
                             self.id,
-                            msgspec.json.encode(msgspec.structs.replace(self, downloader=None)),
+                            msgspec.json.encode(
+                                msgspec.structs.replace(self, downloader=None),
+                                enc_hook=_downloadjob_encode_hook,
+                            ),
                         ),
                     )
                     database.commit()
@@ -317,7 +339,9 @@ class DownloadJob(BaseMessageHandler):
         return HealthCheckResult.OK
 
     def get_status(self) -> dict:
-        return msgspec.to_builtins(msgspec.structs.replace(self, downloader=None))
+        return msgspec.to_builtins(
+            msgspec.structs.replace(self, downloader=None), enc_hook=_downloadjob_encode_hook
+        )
 
     @property
     def video_seq(self) -> int:
