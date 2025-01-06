@@ -196,20 +196,7 @@ class DownloadJob(BaseMessageHandler):
                 self.status = DownloadStatus.FINISHED
                 self.append_message("Finished downloading")
                 self.output_paths = set(msg.output_paths)
-
-                database = database_ctx.get()
-                if database:
-                    database.execute(
-                        "INSERT OR IGNORE INTO jobs (id, payload) VALUES (?, ?)",
-                        (
-                            self.id,
-                            msgspec.json.encode(
-                                msgspec.structs.replace(self, downloader=None),
-                                enc_hook=_downloadjob_encode_hook,
-                            ),
-                        ),
-                    )
-                    database.commit()
+                self.persist_to_database()
             case msg if isinstance(msg, msgtypes.DownloadJobFailedOutputMoveMessage):
                 self.status = DownloadStatus.ERROR
             case msg if isinstance(msg, msgtypes.StreamMuxMessage):
@@ -265,20 +252,7 @@ class DownloadJob(BaseMessageHandler):
                 self.append_message(f"Exception: {exc=}")
                 self.append_message(traceback.format_exc())
                 self.broadcast_status_update()
-
-                database = database_ctx.get()
-                if database:
-                    database.execute(
-                        "INSERT OR IGNORE INTO jobs (id, payload) VALUES (?, ?)",
-                        (
-                            self.id,
-                            msgspec.json.encode(
-                                msgspec.structs.replace(self, downloader=None),
-                                enc_hook=_downloadjob_encode_hook,
-                            ),
-                        ),
-                    )
-                    database.commit()
+                self.persist_to_database()
 
     def append_message(self, message: str) -> None:
         self.message_log.append(
@@ -337,6 +311,21 @@ class DownloadJob(BaseMessageHandler):
                     # finished processing
                     return HealthCheckResult.STREAM_LENGTH_DIFFERS
         return HealthCheckResult.OK
+
+    def persist_to_database(self) -> None:
+        database = database_ctx.get()
+        if database:
+            database.execute(
+                "INSERT OR IGNORE INTO jobs (id, payload) VALUES (?, ?)",
+                (
+                    self.id,
+                    msgspec.json.encode(
+                        msgspec.structs.replace(self, downloader=None),
+                        enc_hook=_downloadjob_encode_hook,
+                    ),
+                ),
+            )
+            database.commit()
 
     def get_status(self) -> dict:
         return msgspec.to_builtins(
