@@ -119,13 +119,14 @@ async def schedule_feed_match(match: FeedItemMatch) -> None:
     if not manager:
         return
 
-    output_directory = pathlib.Path("output")
+    cfgmgr = cfgmgr_ctx.get()
+
+    output_directory = cfgmgr.config.downloader.output_directory or pathlib.Path("output")
     try:
         output_directory.mkdir(parents=True, exist_ok=True)
     except (ValueError, OSError):
         pass
 
-    cfgmgr = cfgmgr_ctx.get()
     downloader = YouTubeDownloader(
         url=match.url,
         poll_interval=300,

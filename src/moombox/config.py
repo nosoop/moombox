@@ -2,6 +2,7 @@
 
 import asyncio
 import collections
+import os
 import pathlib
 import re
 import shutil
@@ -59,6 +60,8 @@ class YouTubeChannelMonitorConfig(msgspec.Struct):
 class DownloaderConfig(msgspec.Struct, kw_only=True):
     num_parallel_downloads: PositiveInt = 1
     ffmpeg_path: pathlib.Path | None = None
+    output_directory: pathlib.Path | None = None
+    staging_directory: pathlib.Path | None = None
     po_token: str | None = None
     visitor_data: str | None = None
 
@@ -70,6 +73,31 @@ class DownloaderConfig(msgspec.Struct, kw_only=True):
                 raise ValueError(f"ffmpeg at {self.ffmpeg_path} is not executable")
         elif not shutil.which("ffmpeg"):
             raise ValueError("Could not find a working installation of ffmpeg")
+
+        if self.staging_directory:
+            if not self.staging_directory.exists():
+                try:
+                    self.staging_directory.mkdir(parents=True, exist_ok=True)
+                except OSError:
+                    raise ValueError(
+                        f"Failed to create staging directory {self.staging_directory}"
+                    )
+            if not os.access(self.staging_directory, os.R_OK | os.W_OK | os.X_OK):
+                raise ValueError(
+                    f"Staging directory {self.staging_directory} is not accessible"
+                )
+        if self.output_directory:
+            if not self.output_directory.exists():
+                try:
+                    self.output_directory.mkdir(parents=True, exist_ok=True)
+                except OSError:
+                    raise ValueError(
+                        f"Failed to create download output directory {self.output_directory}"
+                    )
+            if not os.access(self.output_directory, os.R_OK | os.W_OK | os.X_OK):
+                raise ValueError(
+                    f"Download output directory {self.output_directory} is not accessible"
+                )
 
 
 class AppConfig(msgspec.Struct):

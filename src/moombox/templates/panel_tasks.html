@@ -4,7 +4,7 @@
   <form id="add_video_form" hx-post="{{ url_for('add_video') }}" hx-swap="none" hx-on::after-request="document.querySelector('#add_video_form').reset(); document.querySelector('#dialog').hide();">
     <sl-dialog label="Add a video" id="dialog">
       <sl-input name="url" label="Video URL" defaultValue="" placeholder="https://youtu.be/&hellip;" inputmode="url" required autofocus autocomplete="off"></sl-input>
-      <sl-input name="path" label="Download path" defaultValue="" placeholder="./downloads" autocomplete="off"></sl-input>
+      <sl-input name="path" label="Download path" defaultValue="" placeholder="{{- cfgmgr.config.downloader.output_directory or './downloads' -}}" autocomplete="off"></sl-input>
       <sl-details summary="Additional options">
         <sl-checkbox name="download_thumbnail" checked>Download thumbnail</sl-checkbox>
         <sl-checkbox name="download_description" checked>Download description</sl-checkbox>

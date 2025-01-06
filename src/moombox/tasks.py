@@ -43,8 +43,6 @@ class DownloadManager:
         while jobid in self.jobs:
             # we should never get duplicates, but just in case
             jobid = secrets.token_urlsafe(8)
-        if not downloader.staging_directory:
-            downloader.staging_directory = pathlib.Path("staging") / jobid
 
         cfgmgr = cfgmgr_ctx.get(None)
         if cfgmgr:
@@ -54,6 +52,14 @@ class DownloadManager:
                 downloader.po_token = cfgmgr.config.downloader.po_token
             if not downloader.visitor_data:
                 downloader.visitor_data = cfgmgr.config.downloader.visitor_data
+            if not downloader.staging_directory and cfgmgr.config.downloader.staging_directory:
+                downloader.staging_directory = (
+                    cfgmgr.config.downloader.staging_directory / jobid
+                )
+            if not downloader.output_directory:
+                downloader.output_directory = cfgmgr.config.downloader.output_directory
+        if not downloader.staging_directory:
+            downloader.staging_directory = pathlib.Path("staging") / jobid
 
         self.jobs[jobid] = DownloadJob(jobid, downloader=downloader)
         return self.jobs[jobid]

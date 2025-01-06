@@ -124,7 +124,7 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
             # rewrite the target so we don't fetch it with unnecessary tracking params
             target = f"https://youtu.be/{video_id}"
 
-        output_directory = pathlib.Path("output")
+        output_directory = cfgmgr.config.downloader.output_directory or pathlib.Path("output")
         try:
             requested_output_directory = form.get("path", pathlib.Path(), type=pathlib.Path)
             if not requested_output_directory.is_absolute():
