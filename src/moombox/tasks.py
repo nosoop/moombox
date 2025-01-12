@@ -180,6 +180,8 @@ class DownloadJob(BaseMessageHandler):
             case msg if isinstance(msg, msgtypes.StreamInfoMessage):
                 self.title = msg.video_title
                 self.status = DownloadStatus.WAITING
+                if self.scheduled_start_datetime != msg.start_datetime:
+                    self.scheduled_start_datetime = msg.start_datetime
             case msg if isinstance(msg, msgtypes.FragmentMessage):
                 self.status = DownloadStatus.DOWNLOADING
 
