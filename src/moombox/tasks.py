@@ -17,7 +17,7 @@ import msgspec
 import quart
 from moonarchive.downloaders.youtube import YouTubeDownloader
 from moonarchive.models.ffmpeg import FFMPEGProgress
-from moonarchive.models.youtube_player import YTPlayerMediaType
+from moonarchive.models.youtube_player import YTPlayerAdaptiveFormats, YTPlayerMediaType
 from moonarchive.output import BaseMessageHandler
 
 from .config import build_decode_hook, cfgmgr_ctx
@@ -127,6 +127,8 @@ class DownloadManifestProgress(msgspec.Struct):
     video_seq: int = 0
     audio_seq: int = 0
     max_seq: int = 0
+    video_format: YTPlayerAdaptiveFormats | None = None
+    audio_format: YTPlayerAdaptiveFormats | None = None
     total_downloaded: int = 0
     output: FFMPEGProgress = msgspec.field(default_factory=FFMPEGProgress)
 
@@ -209,6 +211,7 @@ class DownloadJob(BaseMessageHandler):
             case msg if isinstance(msg, msgtypes.FormatSelectionMessage):
                 major_type_str = str(msg.major_type).capitalize()
                 display_media_type = msg.format.media_type.codec_primary or "unknown codec"
+                manifest_progress = self.manifest_progress[msg.manifest_id]
                 if msg.major_type == YTPlayerMediaType.VIDEO:
                     if display_media_type.startswith("avc1"):
                         display_media_type = "h264"
@@ -217,12 +220,16 @@ class DownloadJob(BaseMessageHandler):
                         f"{display_media_type} (itag {msg.format.itag}, manifest "
                         f"{msg.manifest_id}, duration {msg.format.target_duration_sec})"
                     )
+                    manifest_progress.video_format = msg.format
+                    manifest_progress.video_format.url = None
                 elif msg.format.bitrate:
                     self.append_message(
                         f"{major_type_str} format: {msg.format.bitrate // 1000}k "
                         f"{display_media_type} (itag {msg.format.itag}, manifest "
                         f"{msg.manifest_id}, duration {msg.format.target_duration_sec})"
                     )
+                    manifest_progress.audio_format = msg.format
+                    manifest_progress.audio_format.url = None
                 else:
                     self.append_message(
                         f"{major_type_str} format selected (manifest "
