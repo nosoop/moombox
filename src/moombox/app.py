@@ -230,6 +230,12 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
     async def get_status() -> list[dict]:
         return [job.get_status() for job in manager.jobs.values()]
 
+    @app.get("/status/<id>")
+    async def get_status_of_job(id: str) -> dict:
+        if id not in manager.jobs:
+            quart.abort(404, "Task not found")
+        return manager.jobs[id].get_status()
+
     @app.websocket("/ws/overview")
     async def stream_overview() -> None:
         await quart.render_template(
