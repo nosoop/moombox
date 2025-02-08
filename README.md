@@ -29,6 +29,8 @@ hypercorn moombox.app:create_app() -w 1
 ### via Docker / Podman
 
 moombox is also available as a containerized application that can be run via Docker or Podman.
+This method isn't as extensively tested, so please let me know whether or not you have problems
+configuring moombox this way.
 
 The current iteration of the container uses `ffmpeg` as it's available in Debian Bookworm.
 
