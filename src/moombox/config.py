@@ -2,6 +2,7 @@
 
 import asyncio
 import collections
+import logging
 import os
 import pathlib
 import re
@@ -101,12 +102,21 @@ class DownloaderConfig(msgspec.Struct, kw_only=True):
 
 
 class AppConfig(msgspec.Struct):
-    log_level: NonNegativeInt = 30
+    log_level: NonNegativeInt | str = 30
     downloader: DownloaderConfig = msgspec.field(default_factory=DownloaderConfig)
     notifications: list[NotificationConfig] = msgspec.field(default_factory=list)
     channels: list[YouTubeChannelMonitorConfig] = msgspec.field(default_factory=list)
 
     def __post_init__(self) -> None:
+        if isinstance(self.log_level, str):
+            available_levels = logging.getLevelNamesMapping()
+            if self.log_level in available_levels:
+                self.log_level = available_levels[self.log_level]
+            else:
+                raise ValueError(
+                    f"Log level name {self.log_level} is not valid "
+                    f"(expected one of {', '.join(available_levels)})"
+                )
         channel_dupes = set(
             c for c, n in collections.Counter(c.id for c in self.channels).items() if n > 1
         )

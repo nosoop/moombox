@@ -8,7 +8,9 @@
 # Controls the granularity of logs displayed in the standard error stream (incl. Hypercorn).
 # The lower the value, the more verbose the log outputs.
 # Refer to the numeric values in https://docs.python.org/3/library/logging.html#logging-levels
-log_level = 30
+# As of 0.4.0, you may also use the name of the level (case-sensitive) instead of its numeric
+# value.
+log_level = "WARNING"
 
 [downloader]
 # Controls options within moonarchive, the underlying downloading tool.
