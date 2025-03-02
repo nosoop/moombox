@@ -130,7 +130,25 @@ class DownloadManifestProgress(msgspec.Struct):
     video_format: YTPlayerAdaptiveFormats | None = None
     audio_format: YTPlayerAdaptiveFormats | None = None
     total_downloaded: int = 0
+    download_start_dt: datetime.datetime | None = None
+    download_last_update_dt: datetime.datetime | None = None
     output: FFMPEGProgress = msgspec.field(default_factory=FFMPEGProgress)
+
+    @property
+    def estimated_download_time_remaining(self) -> datetime.timedelta | None:
+        """
+        Returns an estimate of the remaining download time for the given manifest.
+        This estimate is produced with granularity in seconds.
+        """
+        if not self.download_start_dt or not self.download_last_update_dt:
+            return None
+        min_current_seq = max(min(self.video_seq, self.audio_seq), 1)
+        remaining_fragments = self.max_seq - min_current_seq
+        elapsed_seconds = max(
+            1, (self.download_last_update_dt - self.download_start_dt).total_seconds()
+        )
+        estimated_remaining_seconds = remaining_fragments / (min_current_seq / elapsed_seconds)
+        return datetime.timedelta(seconds=int(estimated_remaining_seconds))
 
 
 class HealthCheckResult(enum.StrEnum):
@@ -189,6 +207,11 @@ class DownloadJob(BaseMessageHandler):
 
                 manifest_progress = self.manifest_progress[msg.manifest_id]
                 manifest_progress.max_seq = max(manifest_progress.max_seq, msg.max_fragments)
+                if not manifest_progress.download_start_dt:
+                    manifest_progress.download_start_dt = datetime.datetime.now(tz=datetime.UTC)
+                manifest_progress.download_last_update_dt = datetime.datetime.now(
+                    tz=datetime.UTC
+                )
                 if msg.media_type == "audio":
                     manifest_progress.audio_seq = msg.current_fragment
                 elif msg.media_type == "video":

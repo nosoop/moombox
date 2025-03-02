@@ -34,7 +34,7 @@
       Manifest breakdown:
       <ul>
       {% for manifest, progress in video_item.manifest_progress.items() %}
-        <li><span class="manifest-id">{{manifest}}</span>: V: {{progress.video_seq + 1}} / A: {{progress.audio_seq + 1}} / T: {{progress.max_seq + 1}} / DL: {{progress.total_downloaded | human_size}} {%- if progress.output.total_size %} / OUT: {{ progress.output.total_size | human_size }} {%- endif %}</li>
+        <li><span class="manifest-id">{{manifest}}</span>: V: {{progress.video_seq + 1}} / A: {{progress.audio_seq + 1}} / T: {{progress.max_seq + 1}} / DL: {{progress.total_downloaded | human_size}} {%- if progress.output.total_size %} / OUT: {{ progress.output.total_size | human_size }} {%- endif %}{% if progress.estimated_download_time_remaining and progress.estimated_download_time_remaining.total_seconds() >= 10 %} / ETA: {{ progress.estimated_download_time_remaining }}{% endif %}</li>
       {% endfor %}
       </ul>
     </div>
