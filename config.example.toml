@@ -45,6 +45,12 @@ num_parallel_downloads = 1
 po_token = "long-base64-encoded-value-here"
 visitor_data = "shorter-escaped-base64-value-here"
 
+[tasklist]
+# Controls the task view.
+
+# Hides completed downloads older than the given number of days.
+hide_finished_age_days = 30
+
 [[notifications]]
 # Notifications are handled by apprise, so refer to the supported notifications for the syntax:
 # https://github.com/caronc/apprise?tab=readme-ov-file#supported-notifications

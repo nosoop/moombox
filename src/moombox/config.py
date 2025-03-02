@@ -2,6 +2,7 @@
 
 import asyncio
 import collections
+import datetime
 import logging
 import os
 import pathlib
@@ -58,6 +59,16 @@ class YouTubeChannelMonitorConfig(msgspec.Struct):
     terms: PatternMap = msgspec.field(default_factory=PatternMap)
 
 
+class TaskListConfig(msgspec.Struct):
+    hide_finished_age_days: NonNegativeInt = 0
+
+    @property
+    def hide_finished_age(self) -> datetime.timedelta | None:
+        if self.hide_finished_age_days:
+            return datetime.timedelta(days=self.hide_finished_age_days)
+        return None
+
+
 class DownloaderConfig(msgspec.Struct, kw_only=True):
     num_parallel_downloads: PositiveInt = 1
     ffmpeg_path: pathlib.Path | None = None
@@ -103,6 +114,7 @@ class DownloaderConfig(msgspec.Struct, kw_only=True):
 
 class AppConfig(msgspec.Struct):
     log_level: NonNegativeInt | str = 30
+    tasklist: TaskListConfig = msgspec.field(default_factory=TaskListConfig)
     downloader: DownloaderConfig = msgspec.field(default_factory=DownloaderConfig)
     notifications: list[NotificationConfig] = msgspec.field(default_factory=list)
     channels: list[YouTubeChannelMonitorConfig] = msgspec.field(default_factory=list)

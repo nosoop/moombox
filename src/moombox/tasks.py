@@ -104,6 +104,19 @@ class DownloadManager:
         finally:
             self.detail_connections[job].remove(connection)
 
+    @property
+    def visible_jobs(self) -> list["DownloadJob"]:
+        cfgmgr = cfgmgr_ctx.get()
+        now = datetime.datetime.now(tz=datetime.UTC)
+        age = cfgmgr.config.tasklist.hide_finished_age
+        return [
+            job
+            for job in self.jobs.values()
+            if not job.download_finish_datetime
+            or not age
+            or now - job.download_finish_datetime < age
+        ]
+
 
 manager_ctx: ContextVar[DownloadManager | None] = ContextVar("manager", default=None)
 
@@ -187,12 +200,18 @@ class DownloadJob(BaseMessageHandler):
     current_manifest: str | None = None
     title: str | None = None
     status: DownloadStatus = DownloadStatus.UNKNOWN
+    download_finish_datetime: datetime.datetime | None = None
     message_log: list[DownloadLogMessage] = msgspec.field(default_factory=list)
     manifest_progress: dict[str, DownloadManifestProgress] = msgspec.field(
         default_factory=functools.partial(collections.defaultdict, DownloadManifestProgress)
     )
     healthcheck: HealthCheckStatus = msgspec.field(default_factory=HealthCheckStatus)
     output_paths: set[pathlib.Path] = msgspec.field(default_factory=set)
+
+    def __post_init__(self):
+        if self.download_finish_datetime is None and self.status == DownloadStatus.FINISHED:
+            # fall back to the last event entry for completed tasks
+            self.download_finish_datetime = self.message_log[-1].event_datetime
 
     async def handle_message(self, msg: msgtypes.BaseMessage) -> None:
         prev_status = self.status
@@ -223,6 +242,7 @@ class DownloadJob(BaseMessageHandler):
                 self.status = DownloadStatus.FINISHED
                 self.append_message("Finished downloading")
                 self.output_paths = set(msg.output_paths)
+                self.download_finish_datetime = datetime.datetime.now(tz=datetime.UTC)
                 self.persist_to_database()
             case msg if isinstance(msg, msgtypes.DownloadJobFailedOutputMoveMessage):
                 self.status = DownloadStatus.ERROR

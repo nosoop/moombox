@@ -114,7 +114,7 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
     async def main() -> str:
         return await quart.render_template(
             "index.html",
-            download_manager=manager.jobs.values(),
+            download_manager=manager.visible_jobs,
             cfgmgr=cfgmgr,
         )
 
@@ -168,7 +168,7 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
 
         return await quart.render_template(
             "video_table.html",
-            download_manager=manager.jobs.values(),
+            download_manager=manager.visible_jobs,
         )
 
     @app.get("/job/<id>")
@@ -240,7 +240,7 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
     async def stream_overview() -> None:
         await quart.render_template(
             "video_table.html",
-            download_manager=manager.jobs.values(),
+            download_manager=manager.visible_jobs,
         )
         async for message in manager.subscribe():
             await quart.websocket.send(
