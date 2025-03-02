@@ -285,6 +285,8 @@ class DownloadJob(BaseMessageHandler):
         if manager:
             quart.current_app.add_background_task(manager.publish, self)
             quart.current_app.add_background_task(manager.publish_detail, self.id, self)
+        if self.status == DownloadStatus.FINISHED:
+            self.persist_to_database()
 
     async def _fetch_health_status(self) -> HealthCheckResult:
         if not self.video_id:
