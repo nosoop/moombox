@@ -7,6 +7,7 @@ classifiers = [
 ]
 
 dependencies = [
+    "aiolimiter ~= 1.2.1",
     "apprise ~= 1.9.0",
     "feedparser ~= 6.0.11",
     "quart ~= 0.19.6",

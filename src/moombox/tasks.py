@@ -12,6 +12,7 @@ import traceback
 from contextvars import ContextVar
 from typing import Any, AsyncGenerator, NamedTuple
 
+import aiolimiter
 import moonarchive.models.messages as msgtypes
 import msgspec
 import quart
@@ -181,6 +182,9 @@ class HealthCheckResult(enum.StrEnum):
     STREAM_LENGTH_INDETERMINATE = "STREAM_LENGTH_INDETERMINATE"
 
 
+_healthcheck_rate_limiter = aiolimiter.AsyncLimiter(1, 45)
+
+
 class HealthCheckStatus(msgspec.Struct):
     result: HealthCheckResult | None = None
     last_update: datetime.datetime | None = None
@@ -244,6 +248,7 @@ class DownloadJob(BaseMessageHandler):
                 self.output_paths = set(msg.output_paths)
                 self.download_finish_datetime = datetime.datetime.now(tz=datetime.UTC)
                 self.persist_to_database()
+                quart.current_app.add_background_task(self.run_scheduled_healthchecks)
             case msg if isinstance(msg, msgtypes.DownloadJobFailedOutputMoveMessage):
                 self.status = DownloadStatus.ERROR
             case msg if isinstance(msg, msgtypes.StreamMuxMessage):
@@ -346,7 +351,12 @@ class DownloadJob(BaseMessageHandler):
         elif self.downloaded_duration is None:
             return HealthCheckResult.STREAM_LENGTH_INDETERMINATE
 
-        response = await fetch_youtube_player_response(self.video_id, False)
+        async with _healthcheck_rate_limiter:
+            # stagger healthcheck requests to avoid tripping YouTube
+            quart.current_app.logger.debug(
+                f"Performing healthcheck for video ID {self.video_id}"
+            )
+            response = await fetch_youtube_player_response(self.video_id, False)
         if not response or not response.playability_status:
             return HealthCheckResult.HEALTHCHECK_FAILURE
         if response.playability_status.status in ("LOGIN_REQUIRED",):
@@ -365,6 +375,15 @@ class DownloadJob(BaseMessageHandler):
                     # finished processing
                     return HealthCheckResult.STREAM_LENGTH_DIFFERS
         return HealthCheckResult.OK
+
+    async def run_scheduled_healthchecks(self) -> None:
+        """
+        Task to run healthchecks on a schedule.  No healthchecks will be run if the task isn't
+        finished downloading.
+        """
+        while sleep_interval := self._get_next_healthcheck_interval():
+            await asyncio.sleep(sleep_interval.total_seconds())
+            await self.run_healthcheck()
 
     def persist_to_database(self) -> None:
         database = database_ctx.get()
@@ -386,6 +405,28 @@ class DownloadJob(BaseMessageHandler):
         return msgspec.to_builtins(
             msgspec.structs.replace(self, downloader=None), enc_hook=_downloadjob_encode_hook
         )
+
+    def _get_next_healthcheck_interval(self) -> datetime.timedelta | None:
+        """
+        Returns the amount of time to wait between healthcheck requests, or None if no future
+        healthcheck should be performed.
+        """
+        if not self.download_finish_datetime:
+            return None
+        current_time = datetime.datetime.now(tz=datetime.UTC)
+        duration_since_complete = current_time - self.download_finish_datetime
+        duration_map = {
+            # this produces at best around 12 to 18 checks at each interval stage
+            # realistically there may be fewer since checks are throttled
+            datetime.timedelta(hours=1): datetime.timedelta(minutes=5),
+            datetime.timedelta(hours=6): datetime.timedelta(minutes=30),
+            datetime.timedelta(days=1): datetime.timedelta(hours=1),
+            datetime.timedelta(days=3): datetime.timedelta(hours=4),
+        }
+        for offset, sleep_time in duration_map.items():
+            if offset > duration_since_complete:
+                return sleep_time
+        return None
 
     @property
     def video_seq(self) -> int:

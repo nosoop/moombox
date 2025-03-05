@@ -110,6 +110,10 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
         app.add_background_task(notificationmgr.run)
         app.add_background_task(cfgmgr.monitor_path)
 
+        # schedule healthchecks for jobs in cache
+        for job in manager.jobs.values():
+            app.add_background_task(job.run_scheduled_healthchecks)
+
     @app.route("/")
     async def main() -> str:
         return await quart.render_template(
