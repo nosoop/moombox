@@ -218,6 +218,15 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
         quart.current_app.add_background_task(job.run_healthcheck)
         return ""
 
+    @app.post("/job/<id>/cancel")
+    async def cancel_active_job(id: str) -> str:
+        if id not in manager.active_tasks:
+            quart.abort(404, "Task not found")
+        task = manager.active_tasks[id]
+        if not task.done():
+            task.cancel("Download job cancelled from web UI.")
+        return ""
+
     @app.websocket("/ws/job/<id>")
     async def stream_job_info(id: str) -> None:
         if id not in manager.jobs:

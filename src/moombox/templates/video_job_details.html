@@ -55,6 +55,16 @@
       (last checked <sl-relative-time date="{{ video_item.healthcheck.last_update }}" sync></sl-relative-time>)
       {% endif %}
     </div>
+    {% if video_item.has_active_task %}
+    <div id="cancel-zone">
+      <form hx-confirm="Are you sure you want to cancel this download operation?" hx-swap="none">
+        <sl-button id="cancel-job" variant="neutral" size="medium" hx-post="{{ url_for('cancel_active_job', id=video_item.id) }}" outline>
+          <sl-icon slot="prefix" name="x-octagon" aria-hidden="true" library="default"></sl-icon>
+          Cancel download task
+        </sl-button>
+      </form>
+    </div>
+    {% endif %}
     {% if video_item.can_delete_tempfiles %}
     <div id="danger-zone">
       <small>Danger zone:</small>

@@ -48,6 +48,7 @@ class DownloadManager:
     """
 
     jobs: dict[str, "DownloadJob"] = dataclasses.field(default_factory=dict)
+    active_tasks: dict[str, asyncio.Task] = dataclasses.field(default_factory=dict)
     connections: set[asyncio.Queue] = dataclasses.field(default_factory=set)
     detail_connections: dict[str, set[asyncio.Queue]] = dataclasses.field(
         default_factory=functools.partial(collections.defaultdict, set)
@@ -130,6 +131,7 @@ class DownloadStatus(enum.StrEnum):
     MUXING = "Muxing"
     FINISHED = "Finished"
     ERROR = "Error"
+    CANCELLED = "Cancelled"
 
 
 class DownloadLogMessage(NamedTuple):
@@ -302,8 +304,16 @@ class DownloadJob(BaseMessageHandler):
         if self.downloader:
             self.downloader.handlers = [self]
             self.append_message("Started download task")
+            task = asyncio.create_task(self.downloader.async_run())
+            manager = manager_ctx.get()
+            if manager:
+                manager.active_tasks[self.id] = task
             try:
-                await self.downloader.async_run()
+                await task
+            except asyncio.CancelledError as exc:
+                self.status = DownloadStatus.CANCELLED
+                self.append_message(f"Cancelled: {str(exc)}")
+                self.broadcast_status_update()
             except Exception as exc:
                 self.status = DownloadStatus.ERROR
                 self.append_message(f"Exception: {exc=}")
@@ -472,6 +482,13 @@ class DownloadJob(BaseMessageHandler):
         Returns the total number of bytes in the final output.
         """
         return sum(prog.output.total_size or 0 for prog in self.manifest_progress.values())
+
+    @property
+    def has_active_task(self) -> bool:
+        manager = manager_ctx.get()
+        if manager and self.id in manager.active_tasks:
+            return not manager.active_tasks[self.id].done()
+        return False
 
     @property
     def can_delete_tempfiles(self) -> bool:

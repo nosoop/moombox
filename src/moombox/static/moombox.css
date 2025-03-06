@@ -94,6 +94,9 @@ sl-badge.status {
   &.unavailable::part(base) {
     background-color: var( --sl-color-neutral-600);
   }
+  &.cancelled::part(base) {
+    background-color: var( --sl-color-neutral-600);
+  }
 }
 #dialog::part(body) {
   display: flex;
