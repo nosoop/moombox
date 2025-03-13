@@ -133,6 +133,15 @@ class DownloadStatus(enum.StrEnum):
     ERROR = "Error"
     CANCELLED = "Cancelled"
 
+    @property
+    def can_delete_tempfiles(self) -> bool:
+        """
+        Returns whether or not temporary files can be deleted at the current status.
+        DOWNLOADING and MUXING states do have temporary files, but they are restricted from
+        deletion during those states.
+        """
+        return self in (DownloadStatus.CANCELLED, DownloadStatus.FINISHED, DownloadStatus.ERROR)
+
 
 class DownloadLogMessage(NamedTuple):
     event_datetime: datetime.datetime
@@ -494,9 +503,9 @@ class DownloadJob(BaseMessageHandler):
     def can_delete_tempfiles(self) -> bool:
         if self.video_id is None:
             return False
-        elif self.status != DownloadStatus.FINISHED:
-            return False
-        elif any(prog.output.total_size is None for prog in self.manifest_progress.values()):
+        elif self.status == DownloadStatus.FINISHED and any(
+            prog.output.total_size is None for prog in self.manifest_progress.values()
+        ):
             # if any manifests have skipped outputs then we don't consider it safe for removal
             return False
-        return True
+        return self.status.can_delete_tempfiles
