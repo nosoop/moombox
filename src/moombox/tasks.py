@@ -231,12 +231,12 @@ class DownloadJob(BaseMessageHandler):
     async def handle_message(self, msg: msgtypes.BaseMessage) -> None:
         prev_status = self.status
         match msg:
-            case msg if isinstance(msg, msgtypes.StreamInfoMessage):
+            case msgtypes.StreamInfoMessage():
                 self.title = msg.video_title
                 self.status = DownloadStatus.WAITING
                 if self.scheduled_start_datetime != msg.start_datetime:
                     self.scheduled_start_datetime = msg.start_datetime
-            case msg if isinstance(msg, msgtypes.FragmentMessage):
+            case msgtypes.FragmentMessage():
                 self.status = DownloadStatus.DOWNLOADING
 
                 manifest_progress = self.manifest_progress[msg.manifest_id]
@@ -253,21 +253,21 @@ class DownloadJob(BaseMessageHandler):
                 manifest_progress.total_downloaded += msg.fragment_size
                 self.current_manifest = msg.manifest_id
                 self.video_id, *_ = msg.manifest_id.split(".")
-            case msg if isinstance(msg, msgtypes.DownloadJobFinishedMessage):
+            case msgtypes.DownloadJobFinishedMessage():
                 self.status = DownloadStatus.FINISHED
                 self.append_message("Finished downloading")
                 self.output_paths = set(msg.output_paths)
                 self.download_finish_datetime = datetime.datetime.now(tz=datetime.UTC)
                 self.persist_to_database()
                 quart.current_app.add_background_task(self.run_scheduled_healthchecks)
-            case msg if isinstance(msg, msgtypes.DownloadJobFailedOutputMoveMessage):
+            case msgtypes.DownloadJobFailedOutputMoveMessage():
                 self.status = DownloadStatus.ERROR
-            case msg if isinstance(msg, msgtypes.StreamMuxMessage):
+            case msgtypes.StreamMuxMessage():
                 self.status = DownloadStatus.MUXING
                 self.append_message("Started remux process")
-            case msg if isinstance(msg, msgtypes.StreamUnavailableMessage):
+            case msgtypes.StreamUnavailableMessage():
                 self.status = DownloadStatus.UNAVAILABLE
-            case msg if isinstance(msg, msgtypes.FormatSelectionMessage):
+            case msgtypes.FormatSelectionMessage():
                 major_type_str = str(msg.major_type).capitalize()
                 display_media_type = msg.format.media_type.codec_primary or "unknown codec"
                 manifest_progress = self.manifest_progress[msg.manifest_id]
@@ -294,9 +294,9 @@ class DownloadJob(BaseMessageHandler):
                         f"{major_type_str} format selected (manifest "
                         f"{msg.manifest_id}, duration {msg.format.target_duration_sec})"
                     )
-            case msg if isinstance(msg, msgtypes.StringMessage):
+            case msgtypes.StringMessage():
                 self.append_message(msg.text)
-            case msg if isinstance(msg, msgtypes.StreamMuxProgressMessage):
+            case msgtypes.StreamMuxProgressMessage():
                 self.manifest_progress[msg.manifest_id].output = msg.progress
             case _:
                 pass
