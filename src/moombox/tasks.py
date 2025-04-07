@@ -316,7 +316,8 @@ class DownloadJob(BaseMessageHandler):
         database = database_ctx.get()
         if database:
             database.execute(
-                "INSERT OR IGNORE INTO jobs (id, payload) VALUES (?, ?)",
+                "INSERT INTO jobs (id, payload) VALUES (?, ?) "
+                "ON CONFLICT(id) DO UPDATE SET payload=excluded.payload",
                 (
                     self.id,
                     msgspec.json.encode(
