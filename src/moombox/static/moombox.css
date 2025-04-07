@@ -52,6 +52,9 @@ a {
     padding: var(--sl-spacing-small);
   }
 }
+.stream-info {
+  width: 100%;
+}
 #video-table-header, .video-item {
   gap: var(--sl-spacing-x-small);
 }
