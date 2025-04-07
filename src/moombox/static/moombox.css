@@ -150,6 +150,9 @@ sl-details::part(content) {
   font-size: var(--sl-button-font-size-medium);
   align-self: center;
 }
+.job-progress-item {
+  white-space: nowrap;
+}
 #video-healthcheck sl-relative-time {
   /* hides trailing whitespace text node */
   display: inline-block;
