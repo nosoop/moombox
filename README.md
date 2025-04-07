@@ -20,7 +20,7 @@ Python 3.11 or newer is required.
 ```sh
 python -m venv .venv
 source .venv/bin/activate # or .venv\Scripts\activate.bat on Windows
-pip install -e git+https://github.com/nosoop/moombox
+pip install git+https://github.com/nosoop/moombox
 
 # run the application with a single worker since all of the state is within the process
 hypercorn moombox.app:create_app() -w 1

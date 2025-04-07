@@ -37,3 +37,6 @@ requires = [
 [tool.ruff]
 line-length = 96
 lint.extend-select = ["ANN001", "ANN201", "ANN202"]
+
+[tool.setuptools.package-data]
+moombox = [ "static/*", "templates/*" ]
