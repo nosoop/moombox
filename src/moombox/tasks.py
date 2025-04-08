@@ -323,12 +323,20 @@ class DownloadJob(BaseMessageHandler):
                 self.status = DownloadStatus.CANCELLED
                 self.append_message(f"Cancelled: {str(exc)}")
                 self.broadcast_status_update()
+                manager = manager_ctx.get()
+                if manager:
+                    quart.current_app.add_background_task(manager.publish, self)
+                    quart.current_app.add_background_task(manager.publish_detail, self.id, self)
             except Exception as exc:
                 self.status = DownloadStatus.ERROR
                 self.append_message(f"Exception: {exc=}")
                 self.append_message(traceback.format_exc())
                 self.broadcast_status_update()
                 self.persist_to_database()
+                manager = manager_ctx.get()
+                if manager:
+                    quart.current_app.add_background_task(manager.publish, self)
+                    quart.current_app.add_background_task(manager.publish_detail, self.id, self)
 
     def append_message(self, message: str) -> None:
         self.message_log.append(
