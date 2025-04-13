@@ -69,6 +69,10 @@ class TaskListConfig(msgspec.Struct):
         return None
 
 
+class HealthcheckConfig(msgspec.Struct):
+    enable_scheduled: bool = False
+
+
 class DownloaderConfig(msgspec.Struct, kw_only=True):
     num_parallel_downloads: PositiveInt = 1
     ffmpeg_path: pathlib.Path | None = None
@@ -118,6 +122,7 @@ class AppConfig(msgspec.Struct):
     downloader: DownloaderConfig = msgspec.field(default_factory=DownloaderConfig)
     notifications: list[NotificationConfig] = msgspec.field(default_factory=list)
     channels: list[YouTubeChannelMonitorConfig] = msgspec.field(default_factory=list)
+    healthchecks: HealthcheckConfig = msgspec.field(default_factory=HealthcheckConfig)
 
     def __post_init__(self) -> None:
         if isinstance(self.log_level, str):

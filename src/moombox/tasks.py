@@ -410,6 +410,11 @@ class DownloadJob(BaseMessageHandler):
         """
         while sleep_interval := self._get_next_healthcheck_interval():
             await asyncio.sleep(sleep_interval.total_seconds())
+
+            cfgmgr = cfgmgr_ctx.get()
+            if not cfgmgr.config.healthchecks.enable_scheduled:
+                continue
+
             await self.run_healthcheck()
 
     def persist_to_database(self) -> None:

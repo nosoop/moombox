@@ -51,6 +51,12 @@ visitor_data = "shorter-escaped-base64-value-here"
 # Hides completed downloads older than the given number of days.
 hide_finished_age_days = 30
 
+[healthchecks]
+# Configuration options for the healthcheck system.
+
+# Toggles whether or not automated healthchecks are enabled.
+enable_scheduled = false
+
 [[notifications]]
 # Notifications are handled by apprise, so refer to the supported notifications for the syntax:
 # https://github.com/caronc/apprise?tab=readme-ov-file#supported-notifications
