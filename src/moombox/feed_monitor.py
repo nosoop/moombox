@@ -6,6 +6,7 @@ import itertools
 import pathlib
 import re
 import typing
+import unicodedata
 
 import feedparser  # type: ignore
 import httpx
@@ -24,6 +25,17 @@ from .tasks import manager_ctx
 _compress_spaces = re.compile(r"(?i)(?<=\b[a-z])\s+(?=[a-z]\b)")
 
 
+def strip_marks(text: str) -> str:
+    """
+    Strips combining characters and accent marks commonly used as part of 'zalgo' text.
+    Note that as the focus is on locating keywords in user-defined text, this function makes no
+    attempt at preserving internationalization.
+
+    https://www.npmjs.com/package/unzalgo#user-content-how-does-it-work
+    """
+    return "".join(c for c in text if unicodedata.category(c) not in ("Mn", "Me"))
+
+
 def get_pattern_matches(pattern_map: PatternMap, input: str) -> set[str]:
     # returns any matched terms in the given input
     # the matcher here also tries and match exotic character substitutions
@@ -31,6 +43,7 @@ def get_pattern_matches(pattern_map: PatternMap, input: str) -> set[str]:
         input,
         unidec.unidecode(input),
         _compress_spaces.sub("", unidec.unidecode(input)),
+        strip_marks(input),
     )
     return {
         term
