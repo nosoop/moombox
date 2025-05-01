@@ -58,6 +58,10 @@ class YouTubeChannelMonitorConfig(msgspec.Struct):
     name: str | None = None
     terms: PatternMap = msgspec.field(default_factory=PatternMap)
 
+    def __post_init__(self) -> None:
+        if not self.id.startswith("UC"):
+            raise ValueError(f"Expected 'UC' prefix for YouTube channel ID '{self.id}'")
+
 
 class TaskListConfig(msgspec.Struct):
     hide_finished_age_days: NonNegativeInt = 0
