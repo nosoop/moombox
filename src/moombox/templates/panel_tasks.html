@@ -1,24 +1,29 @@
 <sl-tab slot="nav" panel="tasks">Tasks</sl-tab>
-<sl-tab-panel name="tasks">
-  <sl-button variant="primary" onclick="document.querySelector('#dialog').show();"><sl-icon slot="prefix" name="plus"></sl-icon>Add video</sl-button>
-  <form id="add_video_form" hx-post="{{ url_for('add_video') }}" hx-swap="none" hx-on::after-request="document.querySelector('#add_video_form').reset(); document.querySelector('#dialog').hide();">
-    <sl-dialog label="Add a video" id="dialog">
-      <sl-input name="url" label="Video URL" defaultValue="" placeholder="https://youtu.be/&hellip;" inputmode="url" required autofocus autocomplete="off"></sl-input>
-      <sl-input name="path" label="Download path" defaultValue="" placeholder="{{- cfgmgr.config.downloader.output_directory or './downloads' -}}" autocomplete="off"></sl-input>
-      <sl-details summary="Additional options">
-        <sl-checkbox name="download_thumbnail" checked>Download thumbnail</sl-checkbox>
-        <sl-checkbox name="download_description" checked>Download description</sl-checkbox>
-        <sl-checkbox name="prefer_vp9" checked>Prefer VP9 over H264 at equivalent resolution</sl-checkbox>
-        <sl-input type="number" label="Concurrent stream download jobs" name="num_jobs" min="1" value="{{- cfgmgr.config.downloader.num_parallel_downloads -}}" step="1"></sl-input>
-        <sl-select label="Maximum video resolution" name="max_video_resolution" value="{{- cfgmgr.config.downloader.max_video_resolution -}}">
-          {% for resolution in valid_resolution_values | sort(reverse=True) %}
-          <sl-option value="{{ resolution }}">{{ resolution }}p</sl-option>
-          {% endfor %}
-        </sl-select>
-      </sl-details>
-      <sl-button slot="footer" variant="primary" type="submit" id="add-video" style="width: 100%;">Add</sl-button>
-    </sl-dialog>
-  </form>
+<sl-tab-panel id="tab__tasks" name="tasks">
+  <div id="tasklist__toolbar">
+    <sl-button id="tasklist__additem" variant="primary" onclick="document.querySelector('#dialog').show();"><sl-icon slot="prefix" name="plus"></sl-icon>Add video</sl-button>
+    <form id="add_video_form" hx-post="{{ url_for('add_video') }}" hx-swap="none" hx-on::after-request="document.querySelector('#add_video_form').reset(); document.querySelector('#dialog').hide();">
+      <sl-dialog label="Add a video" id="dialog">
+        <sl-input name="url" label="Video URL" defaultValue="" placeholder="https://youtu.be/&hellip;" inputmode="url" required autofocus autocomplete="off"></sl-input>
+        <sl-input name="path" label="Download path" defaultValue="" placeholder="{{- cfgmgr.config.downloader.output_directory or './downloads' -}}" autocomplete="off"></sl-input>
+        <sl-details summary="Additional options">
+          <sl-checkbox name="download_thumbnail" checked>Download thumbnail</sl-checkbox>
+          <sl-checkbox name="download_description" checked>Download description</sl-checkbox>
+          <sl-checkbox name="prefer_vp9" checked>Prefer VP9 over H264 at equivalent resolution</sl-checkbox>
+          <sl-input type="number" label="Concurrent stream download jobs" name="num_jobs" min="1" value="{{- cfgmgr.config.downloader.num_parallel_downloads -}}" step="1"></sl-input>
+          <sl-select label="Maximum video resolution" name="max_video_resolution" value="{{- cfgmgr.config.downloader.max_video_resolution -}}">
+            {% for resolution in valid_resolution_values | sort(reverse=True) %}
+            <sl-option value="{{ resolution }}">{{ resolution }}p</sl-option>
+            {% endfor %}
+          </sl-select>
+        </sl-details>
+        <sl-button slot="footer" variant="primary" type="submit" id="add-video" style="width: 100%;">Add</sl-button>
+      </sl-dialog>
+    </form>
+    <sl-input id="tasklist__searchbar" type="search" name="search" placeholder="Search tasks" hx-post="/search" hx-trigger="input changed delay:500ms, keyup[key=='Enter']" hx-target="#video-table">
+      <sl-icon name="search" slot="prefix"></sl-icon>
+    </sl-input>
+  </div>
   <div hx-ext="sse,morph" sse-connect="{{ url_for('push_overview') }}" hx-swap="none" sse-swap="message" >
     {% include 'video_table.html' %}
   </div>

@@ -194,6 +194,28 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
             download_manager=manager.visible_jobs,
         )
 
+    @app.post("/search")
+    async def search_job_list() -> str:
+        query = (await quart.request.form).get("search")
+        if not query:
+            return await quart.render_template(
+                "video_table.html",
+                download_manager=manager.visible_jobs,
+            )
+        return await quart.render_template(
+            "video_table.html",
+            download_manager=list(
+                filter(
+                    lambda job: any(
+                        query.casefold() in item.casefold()
+                        for item in (job.title, job.video_id, job.author)
+                        if item
+                    ),
+                    manager.jobs.values(),
+                )
+            ),
+        )
+
     @app.get("/job/<id>")
     async def view_job_info(id: str) -> str:
         if id not in manager.jobs:

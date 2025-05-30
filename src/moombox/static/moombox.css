@@ -166,6 +166,26 @@ sl-details::part(content) {
   /* hides trailing whitespace text node */
   display: inline-block;
 }
+#tasklist__toolbar {
+  display: flex;
+  gap: var(--sl-spacing-x-small);
+}
+#tasklist__additem {
+  @media only screen and (max-width: 576px) {
+    align-self: flex-start;
+  }
+}
+#tasklist__searchbar {
+  margin-left: auto;
+  @media only screen and (max-width: 576px) {
+    margin-left: initial;
+    flex-grow: 1;
+    &::part(input) {
+      /* hack to shrink based on flex */
+      width: 0;
+    }
+  }
+}
 .callout {
   border-radius: 0.25rem;
   padding: 0.5rem;
