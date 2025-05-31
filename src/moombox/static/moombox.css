@@ -65,14 +65,13 @@ a {
   width: 100%;
   & > img {
     object-fit: cover;
-    max-height: 6rem;
     aspect-ratio: 16 / 9;
     border-radius: var(--sl-border-radius-medium);
-    width: 100%;
+    width: 9.25rem; /* we originally used a max-height of 6rem; this seems the closest approximation */
     display: block;
     @media only screen and (max-width: 992px) {
       margin-bottom: var(--sl-spacing-x-small);
-      max-height: initial;
+      width: 100%;
     }
   }
 }
