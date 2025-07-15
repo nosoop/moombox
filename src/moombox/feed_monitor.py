@@ -199,6 +199,9 @@ async def monitor_daemon() -> None:
     while True:
         while not cfgmgr.config.channels:
             # suspend feed monitoring while we don't have any channels to monitor
+            quart.current_app.logger.warning(
+                "No channels for monitoring; feed polling suspended - add channels by specifying '[[channels]]' sections"
+            )
             await modified_flag.wait()
             modified_flag.clear()
 
