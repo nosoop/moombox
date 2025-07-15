@@ -80,6 +80,7 @@ class DownloaderConfig(msgspec.Struct, kw_only=True):
     staging_directory: pathlib.Path | None = None
     po_token: str | None = None
     visitor_data: str | None = None
+    cookie_file: pathlib.Path | None = None
 
     def __post_init__(self) -> None:
         if self.ffmpeg_path:
@@ -114,6 +115,9 @@ class DownloaderConfig(msgspec.Struct, kw_only=True):
                 raise ValueError(
                     f"Download output directory {self.output_directory} is not accessible"
                 )
+
+        if self.cookie_file and not self.cookie_file.exists():
+            raise ValueError(f"Cookie file {self.cookie_file} does not exist")
 
 
 class AppConfig(msgspec.Struct):

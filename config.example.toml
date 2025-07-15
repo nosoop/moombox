@@ -45,6 +45,26 @@ num_parallel_downloads = 1
 po_token = "long-base64-encoded-value-here"
 visitor_data = "shorter-escaped-base64-value-here"
 
+# In place of visitor_data, or if you have an account that has access to non-public content,
+# you can specify the path to a cookie file in Netscape format.  You will still need to provide
+# the corresponding po_token.
+# 
+# There are some very important things to note about using this functionality:
+# - moombox's feed monitoring currently only processes public live streams.  You will need to
+#   add any members-only content yourself (or write a separate script to automate the process).
+# - Accesses to cookie files are currently not asynchronous.  That shouldn't affect most users,
+#   but any latency in accessing the file (as it is loaded on-demand) may cause noticeable
+#   hiccups in the web interface.
+# - Authenticated usage isn't as extensively tested as the visitor-only code paths.  As such,
+#   it is strongly recommended that a separate instance of moombox is used for members-only
+#   content.  While the underlying moonarchive module tries to be a good steward, YouTube's
+#   ever-changing machinery may cause authenticated usage to break in ways that may put the
+#   associated account at risk.  This is true for similar projects like yt-dlp, and remains true
+#   for this application.  This serves as your warning.
+# 
+# Again, if you're using visitor data, make sure to comment this value out or omit it entirely.
+cookie_file = "/path/to/your/cookie_file.txt"
+
 [tasklist]
 # Controls the task view.
 

@@ -140,6 +140,7 @@ async def schedule_feed_match(match: FeedItemMatch) -> None:
     except (ValueError, OSError):
         pass
 
+    # many of these parameters are modified in tasks.py @ DownloadManager.create_job
     downloader = YouTubeDownloader(
         url=match.url,
         poll_interval=300,
