@@ -153,12 +153,14 @@ class ConfigManager(msgspec.Struct):
         cfgmgr_ctx.set(self)
 
     async def monitor_path(self) -> None:
-        config_mtime = self.config_path.stat().st_mtime
+        config_mtime = self.config_path.stat().st_mtime if self.config_path.exists() else 0
         self.update_config()
 
         # hot reload config
         while True:
-            new_config_mtime = self.config_path.stat().st_mtime
+            new_config_mtime = (
+                self.config_path.stat().st_mtime if self.config_path.exists() else 0
+            )
             if config_mtime != new_config_mtime:
                 quart.current_app.logger.info("Configuration file modified; parsing")
                 config_mtime = new_config_mtime
@@ -173,7 +175,9 @@ class ConfigManager(msgspec.Struct):
 
     def update_config(self) -> None:
         self.config = msgspec.toml.decode(
-            self.config_path.read_bytes(), type=AppConfig, dec_hook=_config_decode_hook
+            self.config_path.read_bytes() if self.config_path.exists() else b"",
+            type=AppConfig,
+            dec_hook=_config_decode_hook,
         )
         # mark config as updated for tasks
         self.notify()
