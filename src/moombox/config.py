@@ -173,6 +173,13 @@ class ConfigManager(msgspec.Struct):
                     )
             await asyncio.sleep(10)
 
+    @property
+    def config_text(self) -> str:
+        if self.config_path.exists():
+            return self.config_path.read_text("utf8")
+        # TODO: add tomli_w as a dependency so we can show the default file
+        return "# No configuration file; using defaults."
+
     def update_config(self) -> None:
         self.config = msgspec.toml.decode(
             self.config_path.read_bytes() if self.config_path.exists() else b"",
