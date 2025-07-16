@@ -290,10 +290,12 @@ def create_app(test_config: dict | None = None) -> ASGIFramework:
     """
     app = create_quart_app(test_config)
 
-    if app.config.get("PROXY_FIX_OPTS") is not None:
-        # apply proxy fixing middleware if PROXY_FIX_OPTS is present
-        # this may be an empty dict
-        return ProxyFixMiddleware(app, **app.config["PROXY_FIX_OPTS"])
+    # Seems like ProxyFixMiddleware needs to be present for WebSockets to function correctly
+    # over HTTPS???  I'm not sure where the bug is, but it doesn't seem to be in my code, so
+    # we'll just enable it by default unless config.py actually specifies None for this.
+    proxy_fix_opts = app.config.get("PROXY_FIX_OPTS", {})
+    if proxy_fix_opts is not None:
+        return ProxyFixMiddleware(app, **app.config.get("PROXY_FIX_OPTS", {}))
 
     return app
 
