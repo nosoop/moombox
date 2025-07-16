@@ -18,7 +18,6 @@ from .notifications import NotificationManager
 from .tasks import (
     DownloadJob,
     DownloadManager,
-    DownloadStatus,
     downloadjob_decode_hook,
     manager_ctx,
 )
