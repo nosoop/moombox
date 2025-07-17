@@ -47,6 +47,8 @@ device as it'll be used while downloading and muxing the final file before being
 You can also pass `--user` to run moombox as a different user if executing `docker` or `podman`
 as root.  Make sure that, if it already exists, `/data/config/database.db3` is writable.
 
+OR run with [docker-compose.yml](docker-compose.yml)
+
 ## Configuration
 
 Configuration is controlled by a `config.toml` in the instance path.  See `config.example.toml`

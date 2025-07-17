@@ -1,7 +1,7 @@
 # This is an example configuration file for moombox.
 # The configuration file is optional; the application will continue to run without one.
 # Depending on how moombox is configured, the location of `config.toml` will vary.
-# 
+#
 # Note that many of the example values are system-dependent, so you should not be copying this
 # file and expecting it all to work.
 
@@ -28,11 +28,11 @@ ffmpeg_path = "/opt/ffmpeg-custom/bin/ffmpeg"
 # This ideally should be on a fast storage device if one is available.
 # Parent directories are created as needed; config file validation will fail if the directory
 # does not exist and could not be created.
-staging_directory = '/opt/moombox/staging'
+staging_directory = "/data/staging"
 
 # Overrides the default directory where final output files are copied.
 # Such files are not placed into a subdirectory.  This should be on a large storage device.
-output_directory = '/opt/moombox/output'
+output_directory = "/data/output"
 
 # Maximum number of fragment downloads to have in-flight for each stream (each broadcast has at
 # least one video and one audio stream).
@@ -80,7 +80,7 @@ enable_scheduled = false
 [[notifications]]
 # Notifications are handled by apprise, so refer to the supported notifications for the syntax:
 # https://github.com/caronc/apprise?tab=readme-ov-file#supported-notifications
-# 
+#
 # You may define as many notification targets as you'd like.
 url = "discord://webhook_id/webhook_token"
 
@@ -88,11 +88,16 @@ url = "discord://webhook_id/webhook_token"
 # Tags have a category prefix:
 #   - 'status' prefix are for notifications sent on download task status change
 #   - 'monitor-feed' prefix for when upcoming streams matching criteria are detected
-tags = [ "status:downloading", "status:finished", "status:error", "monitor-feed:found" ]
+tags = [
+  "status:downloading",
+  "status:finished",
+  "status:error",
+  "monitor-feed:found",
+]
 
 [[channels]]
 # moombox is able to poll the RSS feed for upcoming streams with title / description matches.
-# 
+#
 # Feeds are currently polled every 10 minutes and will always reflect the current version of the
 # configuration file.
 id = "UCW5uhrG1eCBYditmhL0Ykjw"
@@ -102,7 +107,7 @@ name = "Elizabeth Rose Bloodflame"
 
 # The 'terms' table maps key phrases to regular expressions to scan for in upcoming streams'
 # titles and descriptions.  Notifications will indicate which terms are present.
-# 
+#
 # IMPORTANT:  If no terms are provided, no streams will be automatically downloaded!  To
 # download every stream, use a wildcard entry `terms."(all)" = '(.*)'`.
 terms."karaoke" = '(?i)(\W|^)karaoke'
