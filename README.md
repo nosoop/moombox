@@ -63,6 +63,14 @@ mount a folder to that location when running it (as described in the installatio
 
 [instance-path]: https://flask.palletsprojects.com/en/stable/config/#instance-folders
 
+### po_token
+
+See [PO-Token-Guide#with-an-account](https://github.com/yt-dlp/yt-dlp/wiki/PO-Token-Guide#with-an-account)
+
+### visitor_data
+
+See [PO-Token-Guide#po-tokens-for-gvs](https://github.com/yt-dlp/yt-dlp/wiki/PO-Token-Guide#po-tokens-for-gvs)
+
 ## License
 
 Released under the MIT license.
