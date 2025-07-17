@@ -1,11 +1,10 @@
-FROM python:3.11-slim-bookworm
+FROM docker.io/library/python:3.11-slim-bookworm
 
 # Install the project into `/app`
 WORKDIR /app
 
 RUN apt-get update \
     && apt-get install --no-install-recommends --assume-yes ffmpeg ca-certificates git \
-    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Add source code and set up an editable install

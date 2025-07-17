@@ -28,11 +28,11 @@ ffmpeg_path = "/opt/ffmpeg-custom/bin/ffmpeg"
 # This ideally should be on a fast storage device if one is available.
 # Parent directories are created as needed; config file validation will fail if the directory
 # does not exist and could not be created.
-staging_directory = "/data/staging"
+staging_directory = '/opt/moombox/staging'
 
 # Overrides the default directory where final output files are copied.
 # Such files are not placed into a subdirectory.  This should be on a large storage device.
-output_directory = "/data/output"
+output_directory = '/opt/moombox/output'
 
 # Maximum number of fragment downloads to have in-flight for each stream (each broadcast has at
 # least one video and one audio stream).
