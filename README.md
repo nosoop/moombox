@@ -49,6 +49,14 @@ as root.  Make sure that, if it already exists, `/data/config/database.db3` is w
 
 OR run with [docker-compose.yml](docker-compose.yml)
 
+1. Clone [config.container.toml](config.container.toml) and rename to `config.toml`
+1. Put `config.toml` into config dir
+1. Run
+
+```sh
+docker compose up -d
+```
+
 ## Configuration
 
 Configuration is controlled by a `config.toml` in the instance path.  See `config.example.toml`

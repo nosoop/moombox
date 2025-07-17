@@ -8,6 +8,6 @@ services:
       - 5000:5000
     volumes:
       # - ./youtube.com_cookies.txt:/cookies.txt # optional cookie file, use to download members-only content
-      - ./config.example.toml:/data/config/config.toml # config file
-      - ./data/tmp:/opt/moombox/staging # config downloader.staging_directory
-      - ./data/video:/opt/moombox/output # config downloader.output_directory
+      - ./data/config:/data/config # config dir, place your config.toml in this dir
+      - ./data/tmp:/data/staging # config downloader.staging_directory
+      - ./data/video:/data/output # config downloader.output_directory
