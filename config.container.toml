@@ -1,0 +1,55 @@
+# This is a baseline configuration file for moombox when using it in a container.
+# If you are using Docker (or Docker Compose), you should copy this file, apply modifications
+# as desired, then mount it under `/data/config/config.toml`.
+#
+# Note that this configuration contains just the minimum options needed for moombox to run in a
+# container, plus some common settings users may want to configure.  There are some options that
+# must be changed for proper operation.
+#
+# For details on all available options, including those not present in this file, please refer
+# to the full example configuration located at `config.example.toml`.
+
+log_level = "WARNING"
+
+[downloader]
+
+# Overrides the directory where files are stored while being downloaded and while being muxed.
+# Such files will be located in a subdirectory named after its individual job ID.
+# This ideally should be on a fast storage device if one is available.
+staging_directory = "/data/staging"
+
+# Overrides the default directory where final output files are copied.
+# You may mount additional paths and specify custom paths per-video.
+output_directory = "/data/output"
+
+# Use proof-of-origin when making requests.
+# See https://github.com/nosoop/moonarchive?tab=readme-ov-file#proof-of-origin-downloads
+# You MUST replace this value before scheduling a video for download.
+po_token = "long-base64-encoded-value-here"
+visitor_data = "shorter-escaped-base64-value-here"
+
+# In place of a visitor_data value, you may specify a cookie file in Netscape format.
+# If so, make sure to (1) remove visitor_data and (2) ensure that the po_token is correct for
+# that file.  If not, delete the following line.
+cookie_file = "/cookies.txt"
+
+[tasklist]
+hide_finished_age_days = 30
+
+[[notifications]]
+# Any number of notification sections may be specified to produce notifications on certain
+# events, such as on started / completed downloads.  moombox uses apprise as the underlying
+# notification system; it expects its form of service URLs in the configuration:
+#
+# https://github.com/caronc/apprise?tab=readme-ov-file#supported-notifications
+url = "discord://webhook_id/webhook_token"
+tags = [ "status:downloading", "status:finished", "status:error", "monitor-feed:found" ]
+
+[[channels]]
+# moombox is able to poll YouTube channels' RSS feeds for upcoming streams and schedule them
+# for download.  One or more terms must be provided with a corresponding regex to match against.
+id = "UCW5uhrG1eCBYditmhL0Ykjw"
+name = "Elizabeth Rose Bloodflame"
+terms."karaoke" = '(?i)(\W|^)karaoke'
+terms."unarchived" = '(?i)(\W|^)unar?chived?'
+num_desc_lookbehind = 2

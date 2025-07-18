@@ -1,0 +1,13 @@
+---
+services:
+  moombox:
+    container_name: moombox
+    image: ghcr.io/nosoop/moombox
+    restart: unless-stopped
+    ports:
+      - 5000:5000
+    volumes:
+      # - ./youtube.com_cookies.txt:/cookies.txt # optional cookie file, use to download members-only content
+      - ./data/config:/data/config # config dir, place your config.toml in this dir
+      - ./data/tmp:/data/staging # config downloader.staging_directory
+      - ./data/video:/data/output # config downloader.output_directory
