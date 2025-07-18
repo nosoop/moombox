@@ -1,100 +1,34 @@
-# This is an example configuration file for moombox.
-# The configuration file is optional; the application will continue to run without one.
-# Depending on how moombox is configured, the location of `config.toml` will vary.
+# This is a baseline configuration file for moombox when using it in a container.
+# If you are using Docker (or Docker Compose), you should copy this file, apply modifications
+# as desired, then mount it under `/data/config/config.toml`.
 #
-# Note that many of the example values are system-dependent, so you should not be copying this
-# file and expecting it all to work.
-
-# Controls the granularity of logs displayed in the standard error stream (incl. Hypercorn).
-# The lower the value, the more verbose the log outputs.
-# Refer to the numeric values in https://docs.python.org/3/library/logging.html#logging-levels
-# As of 0.4.0, you may also use the name of the level (case-sensitive) instead of its numeric
-# value.
-log_level = "WARNING"
+# Note that this configuration contains little more than the minimum needed for moombox to run
+# in a container.
+#
+# For details on all available options, including those not present in this file, please refer
+# to the full example configuration located at `config.example.toml`.
 
 [downloader]
-# Controls options within moonarchive, the underlying downloading tool.
-# Changes to the downloader options will only take effect on new downloads.
-
-# Overrides the ffmpeg binary used for muxing outputs.
-# Omitting this uses the ffmpeg resolved by PATH.  The uncommented path below is a Linux path:
-# ffmpeg_path = "/opt/ffmpeg-custom/bin/ffmpeg"
-
-# On Windows, use single quotes to ensure backslashes aren't treated as escape sequences:
-# ffmpeg_path = 'C:\ffmpeg-7.1-full_build\bin\ffmpeg.exe'
 
 # Overrides the directory where files are stored while being downloaded and while being muxed.
 # Such files will be located in a subdirectory named after its individual job ID.
 # This ideally should be on a fast storage device if one is available.
-# Parent directories are created as needed; config file validation will fail if the directory
-# does not exist and could not be created.
 staging_directory = "/data/staging"
 
 # Overrides the default directory where final output files are copied.
-# Such files are not placed into a subdirectory.  This should be on a large storage device.
+# You may mount additional paths and specify custom paths per-video.
 output_directory = "/data/output"
-
-# Maximum number of fragment downloads to have in-flight for each stream (each broadcast has at
-# least one video and one audio stream).
-num_parallel_downloads = 1
 
 # Use proof-of-origin when making requests.
 # See https://github.com/nosoop/moonarchive?tab=readme-ov-file#proof-of-origin-downloads
-# Visitor data is expected to have escaped "%3D" sequences in place of "=", while POTokens have
-# "=" directly.
+# You MUST replace this value before scheduling a video for download.
 po_token = "long-base64-encoded-value-here"
 visitor_data = "shorter-escaped-base64-value-here"
 
+# In place of a visitor_data value, you may specify a cookie file in Netscape format.
+# If so, make sure to (1) remove visitor_data and (2) ensure that the po_token is correct for
+# that file.  If not, delete the following line.
+cookie_file = "/cookies.txt"
+
 [tasklist]
-# Controls the task view.
-
-# Hides completed downloads older than the given number of days.
 hide_finished_age_days = 30
-
-[healthchecks]
-# Configuration options for the healthcheck system.
-
-# Toggles whether or not automated healthchecks are enabled.
-enable_scheduled = false
-
-[[notifications]]
-# Notifications are handled by apprise, so refer to the supported notifications for the syntax:
-# https://github.com/caronc/apprise?tab=readme-ov-file#supported-notifications
-#
-# You may define as many notification targets as you'd like.
-url = "discord://webhook_id/webhook_token"
-
-# moombox broadcasts notifications based on tags.
-# Tags have a category prefix:
-#   - 'status' prefix are for notifications sent on download task status change
-#   - 'monitor-feed' prefix for when upcoming streams matching criteria are detected
-tags = [
-  "status:downloading",
-  "status:finished",
-  "status:error",
-  "monitor-feed:found",
-]
-
-[[channels]]
-# moombox is able to poll the RSS feed for upcoming streams with title / description matches.
-#
-# Feeds are currently polled every 10 minutes and will always reflect the current version of the
-# configuration file.
-id = "UCW5uhrG1eCBYditmhL0Ykjw"
-
-# A friendly name may be specified for notifications; otherwise it will use the channel name.
-name = "Elizabeth Rose Bloodflame"
-
-# The 'terms' table maps key phrases to regular expressions to scan for in upcoming streams'
-# titles and descriptions.  Notifications will indicate which terms are present.
-#
-# IMPORTANT:  If no terms are provided, no streams will be automatically downloaded!  To
-# download every stream, use a wildcard entry `terms."(all)" = '(.*)'`.
-terms."karaoke" = '(?i)(\W|^)karaoke'
-terms."unarchived" = '(?i)(\W|^)unar?chived?'
-terms."rebroadcast" = '(?i)(\W|^)re-?broadcast'
-
-# Determines how many older video items to scan through to identify description lines that are
-# unique to a given video.  This attempts to reduce false positives when a streamer uses some
-# default boilerplate that includes keyword matches.
-num_desc_lookbehind = 2
