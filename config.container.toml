@@ -2,11 +2,14 @@
 # If you are using Docker (or Docker Compose), you should copy this file, apply modifications
 # as desired, then mount it under `/data/config/config.toml`.
 #
-# Note that this configuration contains little more than the minimum needed for moombox to run
-# in a container.
+# Note that this configuration contains just the minimum options needed for moombox to run in a
+# container, plus some common settings users may want to configure.  There are some options that
+# must be changed for proper operation.
 #
 # For details on all available options, including those not present in this file, please refer
 # to the full example configuration located at `config.example.toml`.
+
+log_level = "WARNING"
 
 [downloader]
 
@@ -32,3 +35,21 @@ cookie_file = "/cookies.txt"
 
 [tasklist]
 hide_finished_age_days = 30
+
+[[notifications]]
+# Any number of notification sections may be specified to produce notifications on certain
+# events, such as on started / completed downloads.  moombox uses apprise as the underlying
+# notification system; it expects its form of service URLs in the configuration:
+#
+# https://github.com/caronc/apprise?tab=readme-ov-file#supported-notifications
+url = "discord://webhook_id/webhook_token"
+tags = [ "status:downloading", "status:finished", "status:error", "monitor-feed:found" ]
+
+[[channels]]
+# moombox is able to poll YouTube channels' RSS feeds for upcoming streams and schedule them
+# for download.  One or more terms must be provided with a corresponding regex to match against.
+id = "UCW5uhrG1eCBYditmhL0Ykjw"
+name = "Elizabeth Rose Bloodflame"
+terms."karaoke" = '(?i)(\W|^)karaoke'
+terms."unarchived" = '(?i)(\W|^)unar?chived?'
+num_desc_lookbehind = 2
