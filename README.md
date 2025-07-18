@@ -47,15 +47,18 @@ device as it'll be used while downloading and muxing the final file before being
 You can also pass `--user` to run moombox as a different user if executing `docker` or `podman`
 as root.  Make sure that, if it already exists, `/data/config/database.db3` is writable.
 
-OR run with [docker-compose.yml](docker-compose.yml)
+#### via Docker Compose
 
-1. Clone [config.container.toml](config.container.toml) and rename to `config.toml`
-1. Put `config.toml` into config dir
-1. Run
+You may also run moombox using Docker Compose instead.
 
-```sh
-docker compose up -d
-```
+1. Copy [config.container.toml](config.container.toml) to `./data/config.toml` and make the
+necessary user-specific modifications.
+2. Start the container using the provided [docker-compose.yml][] file:
+   ```sh
+   docker compose up -d
+   ```
+
+[docker-compose.yml]: docker-compose.yml
 
 ## Configuration
 
@@ -71,13 +74,23 @@ mount a folder to that location when running it (as described in the installatio
 
 [instance-path]: https://flask.palletsprojects.com/en/stable/config/#instance-folders
 
-### po_token
+> [!IMPORTANT]
+> These days, a proof-of-origin token is practically a requirement when downloading from
+> YouTube.  [moonarchive's section on proof-of-origin downloads][pot-dl] covers this
+> extensively.
+> 
+> It is strongly recommended to set both `downloader.po_token` and either
+> `downloader.visitor_data` or `downloader.cookie_file` before downloading a file; otherwise
+> YouTube may block your connection from accessing videos.  To obtain that information:
+>
+> - `po_token`: See [yt-dlp &rarr; PO Token for GVS][pot-gvs].
+> - `visitor_data`: See the above; the value you want can be retrieved using
+>   `ytcfg.get('VISITOR_DATA')` in the browser console.
+> - `cookie_file`: See [yt-dlp &rarr; Exporting YouTube cookies][yt-cookies].
 
-See [PO-Token-Guide#with-an-account](https://github.com/yt-dlp/yt-dlp/wiki/PO-Token-Guide#with-an-account)
-
-### visitor_data
-
-See [PO-Token-Guide#po-tokens-for-gvs](https://github.com/yt-dlp/yt-dlp/wiki/PO-Token-Guide#po-tokens-for-gvs)
+[pot-dl]: https://github.com/nosoop/moonarchive?tab=readme-ov-file#proof-of-origin-downloads
+[pot-gvs]: https://github.com/yt-dlp/yt-dlp/wiki/PO-Token-Guide#po-token-for-gvs
+[yt-cookies]: https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies
 
 ## License
 
