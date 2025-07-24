@@ -51,8 +51,8 @@ as root.  Make sure that, if it already exists, `/data/config/database.db3` is w
 
 You may also run moombox using Docker Compose instead.
 
-1. Copy [config.container.toml](config.container.toml) to `./data/config.toml` and make the
-necessary user-specific modifications.
+1. Copy [config.container.toml](config.container.toml) to `./data/config/config.toml` and make
+the necessary user-specific modifications.
 2. Start the container using the provided [docker-compose.yml][] file:
    ```sh
    docker compose up -d
