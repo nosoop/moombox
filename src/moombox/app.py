@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import datetime
 import os
 import pathlib
 import sqlite3
@@ -280,6 +281,14 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
                 return f"{num:3.2f}{unit}{suffix}"
             num /= 1024.0
         return f"{num:.2f}Yi{suffix}"
+
+    @app.template_filter("media_duration")
+    def _timedelta_format(td: datetime.timedelta | None) -> str:
+        """
+        User-friendly display of a timedelta value (by just rounding).
+        There doesn't seem to be any good way to fine-tune the precision.
+        """
+        return str(datetime.timedelta(seconds=round(td.total_seconds() if td else 0)))
 
     return app
 

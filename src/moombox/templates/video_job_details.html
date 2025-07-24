@@ -28,6 +28,9 @@
         <sl-format-number value="{{video_item.total_muxed}}"></sl-format-number> bytes
         ({{video_item.total_muxed | human_size}})
       </div>
+      <div>
+        Output duration: {{video_item.total_duration_timedelta | media_duration}}
+      </div>
     </div>
     {% if video_item.manifest_progress %}
     <div id="manifest-breakdown">

@@ -494,6 +494,16 @@ class DownloadJob(BaseMessageHandler):
         )
 
     @property
+    def total_duration_timedelta(self) -> datetime.timedelta | None:
+        if not len(self.manifest_progress):
+            return None
+        return datetime.timedelta(
+            microseconds=sum(
+                prog.output.out_time_us or 0 for prog in self.manifest_progress.values()
+            )
+        )
+
+    @property
     def total_downloaded(self) -> int:
         """
         Returns the total number of bytes transferred.
