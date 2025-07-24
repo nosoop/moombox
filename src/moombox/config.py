@@ -186,7 +186,7 @@ class ConfigManager(msgspec.Struct):
         if self.config_path.exists():
             return self.config_path.read_text("utf8")
         # TODO: add tomli_w as a dependency so we can show the default file
-        return "# No configuration file; using defaults."
+        return f"# No configuration file at '{self.config_path.resolve()}'; using defaults."
 
     def update_config(self) -> None:
         self.config = msgspec.toml.decode(
