@@ -155,6 +155,21 @@ class DownloadStatus(enum.StrEnum):
     WAITING = "Waiting"
     DOWNLOADING = "Downloading"
     MUXING = "Muxing"
+
+    UNMUXED = "Unmuxed"
+    """
+    Used when one or more mux operations fail due to a broadcast producing files that cannot be
+    muxed into one file.  Users will need to manually process the original downloads.
+    """
+
+    FINISHED_SPLIT = "Finished (Split)"
+    """
+    Used when the stream was split across multiple broadcasts, resulting in multiple output
+    files.  Users may want to manually process the original downloads to produce one final file
+    (a rather complicated exercise that is left to the user), but otherwise all downloaded
+    content was processed.
+    """
+
     FINISHED = "Finished"
     ERROR = "Error"
     CANCELLED = "Cancelled"
@@ -328,7 +343,14 @@ class DownloadJob(BaseMessageHandler):
                 self.current_manifest = msg.manifest_id
                 self.video_id, *_ = msg.manifest_id.split(".")
             case msgtypes.DownloadJobFinishedMessage():
-                self.status = DownloadStatus.FINISHED
+                # error status takes priority over finished
+                if self.status != DownloadStatus.ERROR:
+                    if msg.unmuxed_broadcasts:
+                        self.status = DownloadStatus.UNMUXED
+                    elif msg.multi_broadcast:
+                        self.status = DownloadStatus.FINISHED_SPLIT
+                    else:
+                        self.status = DownloadStatus.FINISHED
                 self.append_message("Finished downloading")
                 self.output_paths = set(msg.output_paths)
                 self.download_finish_datetime = datetime.datetime.now(tz=datetime.UTC)
@@ -372,6 +394,14 @@ class DownloadJob(BaseMessageHandler):
                 self.append_message(msg.text)
             case msgtypes.StreamMuxProgressMessage():
                 self.manifest_progress[msg.manifest_id].output = msg.progress
+            case msgtypes.StreamMuxFailureMessage():
+                self.append_message(
+                    f"Mux for {msg.manifest_id} failed: {msg.reason or 'Unknown reason'}"
+                )
+                if msg.ffmpeg_exit_code:
+                    # ffmpeg bailed; this is very bad.
+                    # otherwise we assume partial mux, handled in DownloadJobFinishedMessage
+                    self.status = DownloadStatus.ERROR
             case _:
                 pass
 

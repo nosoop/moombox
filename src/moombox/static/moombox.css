@@ -100,6 +100,12 @@ sl-badge.status {
   &.cancelled::part(base) {
     background-color: var( --sl-color-neutral-600);
   }
+  &.unmuxed::part(base) {
+    background-color: var(--sl-color-warning-300);
+  }
+  &.finished-split::part(base) {
+    background-color: var(--sl-color-indigo-600)
+  }
 }
 #dialog::part(body) {
   display: flex;
