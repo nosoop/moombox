@@ -222,4 +222,4 @@ class ConfigManager(msgspec.Struct):
 
     @property
     def read_only(self) -> bool:
-        return not self.config_path.exists() or not os.access(self.config_path, os.R_OK)
+        return not self.config_path.exists() or not os.access(self.config_path, os.W_OK)
