@@ -18,7 +18,7 @@ from .config import PatternMap, YouTubeChannelMonitorConfig, cfgmgr_ctx
 from .database import database_ctx
 from .extractor import fetch_youtube_player_response
 from .notifications import apobj_ctx
-from .tasks import manager_ctx
+from .tasks import DownloadStatus, manager_ctx
 
 # used to ensure single characters that are spaced out are merged
 # https://stackoverflow.com/a/24200646
@@ -130,6 +130,13 @@ async def schedule_feed_match(match: FeedItemMatch) -> None:
 
     manager = manager_ctx.get()
     if not manager:
+        return
+
+    # skip scheduling if the match is already being downloaded
+    if any(
+        job.video_id == match.video_id and job.status not in (DownloadStatus.UNAVAILABLE,)
+        for job in manager.jobs.values()
+    ):
         return
 
     cfgmgr = cfgmgr_ctx.get()
