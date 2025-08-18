@@ -141,7 +141,11 @@ async def schedule_feed_match(match: FeedItemMatch) -> None:
 
     cfgmgr = cfgmgr_ctx.get()
 
-    output_directory = cfgmgr.config.downloader.output_directory or pathlib.Path("output")
+    output_directory = (
+        match.channel_config.output_directory
+        or cfgmgr.config.downloader.output_directory
+        or pathlib.Path("output")
+    )
     try:
         output_directory.mkdir(parents=True, exist_ok=True)
     except (ValueError, OSError):

@@ -113,3 +113,10 @@ terms."rebroadcast" = '(?i)(\W|^)re-?broadcast'
 # unique to a given video.  This attempts to reduce false positives when a streamer uses some
 # default boilerplate that includes keyword matches.
 num_desc_lookbehind = 2
+
+# Optional custom output path override for streams.
+# 
+# NOTE: At this time, this only applies to videos that were automatically added via feed
+# monitoring.  Videos manually scheduled for download are not currently checked for a
+# corresponding channel match.
+output_directory = "/opt/moombox/output/liz"

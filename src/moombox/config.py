@@ -57,6 +57,7 @@ class YouTubeChannelMonitorConfig(msgspec.Struct):
     num_desc_lookbehind: NonNegativeInt = 2
     name: str | None = None
     terms: PatternMap = msgspec.field(default_factory=PatternMap)
+    output_directory: pathlib.Path | None = None
 
     def __post_init__(self) -> None:
         if not self.id.startswith("UC"):
