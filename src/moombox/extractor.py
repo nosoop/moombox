@@ -57,7 +57,8 @@ class YouTubeVideoDetails(msgspec.Struct, rename="camel"):
         False  # whether or not the content is currently being shown in real-time
     )
     is_live_content: bool | None = False  # whether or not this video was a live broadcast
-    is_upcoming: bool | None = False  # if a future stream
+    is_upcoming: bool | None = False  # if a future stream (including waiting for streamer)
+    is_post_live_dvr: bool | None = False  # if recently finished (fragments available)
 
     @property
     def video_duration(self) -> int:
