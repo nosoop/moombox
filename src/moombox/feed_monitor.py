@@ -122,7 +122,7 @@ async def schedule_feed_match(match: FeedItemMatch) -> None:
     resp = await fetch_youtube_player_response(match.video_id)
     if not resp or not resp.video_details:
         return
-    if not resp.video_details.is_upcoming and not resp.video_details.is_live:
+    if not (resp.video_details.is_upcoming or resp.video_details.is_live):
         # ignore completed streams / completed premieres
         # TODO: check if this also applies to broadcasts that are behind schedule
         # TODO: handle post-live
