@@ -5,8 +5,10 @@ import collections
 import itertools
 import pathlib
 import re
+import sqlite3
 import typing
 import unicodedata
+from contextvars import ContextVar
 
 import feedparser  # type: ignore
 import httpx
@@ -23,6 +25,8 @@ from .tasks import DownloadStatus, manager_ctx
 # used to ensure single characters that are spaced out are merged
 # https://stackoverflow.com/a/24200646
 _compress_spaces = re.compile(r"(?i)(?<=\b[a-z])\s+(?=[a-z]\b)")
+
+_db_cursor_ctx: ContextVar[sqlite3.Cursor] = ContextVar("db_cursor")
 
 
 def strip_marks(text: str) -> str:
@@ -118,27 +122,36 @@ async def get_channel_matches(channel: YouTubeChannelMonitorConfig) -> list[Feed
 
 
 async def schedule_feed_match(match: FeedItemMatch) -> None:
+    manager = manager_ctx.get()
+    if not manager:
+        return
+
+    # skip scheduling if it's already active
+    # this should catch all downloads that aren't manually cleared
+    if any(
+        job.video_id == match.video_id and job.status not in (DownloadStatus.UNAVAILABLE,)
+        for job in manager.jobs.values()
+    ):
+        return
+
+    cur = _db_cursor_ctx.get()
+    cur.execute("SELECT EXISTS(SELECT 1 FROM video_history WHERE id = ?)", (match.video_id,))
+    (video_in_history,) = cur.fetchone()
+    if video_in_history:
+        return
+
     # throttling for this happens in monitor_daemon()
     resp = await fetch_youtube_player_response(match.video_id)
     if not resp or not resp.video_details:
+        # video is unavailable; skip adding but allow for rechecks
         return
     elif not (
         resp.video_details.is_post_live_dvr
         or resp.video_details.is_upcoming
         or resp.video_details.is_live
     ):
-        # ignore completed streams, but allow upcoming / live premieres
-        return
-
-    manager = manager_ctx.get()
-    if not manager:
-        return
-
-    # skip scheduling if the match is already being downloaded
-    if any(
-        job.video_id == match.video_id and job.status not in (DownloadStatus.UNAVAILABLE,)
-        for job in manager.jobs.values()
-    ):
+        # add IDs that can no longer be downloaded into history so we know not to recheck them
+        cur.execute("INSERT OR IGNORE INTO video_history VALUES (?);", (match.video_id,))
         return
 
     cfgmgr = cfgmgr_ctx.get()
@@ -208,7 +221,7 @@ async def monitor_daemon() -> None:
     database.execute("CREATE TABLE IF NOT EXISTS video_history (id TEXT UNIQUE);")
     database.commit()
 
-    cur = database.cursor()
+    _db_cursor_ctx.set(database.cursor())
 
     while True:
         while not cfgmgr.config.channels:
@@ -229,15 +242,6 @@ async def monitor_daemon() -> None:
                 pass
             else:
                 for match in matches:
-                    # add newly found IDs that match into history so we know not to recheck them
-                    # TODO: ensure that videos that went private are removed from here so users get notified when they reappear
-                    cur.execute(
-                        "INSERT OR IGNORE INTO video_history VALUES (?);", (match.video_id,)
-                    )
-                    if cur.rowcount == 0:
-                        # already existing row; don't try schedule
-                        continue
-
                     # stagger the scheduling since we don't want to hit the player requests too often
                     await schedule_feed_match(match)
                     await asyncio.sleep(10)
