@@ -10,6 +10,7 @@ import typing
 import unicodedata
 from contextvars import ContextVar
 
+import aiolimiter
 import feedparser  # type: ignore
 import httpx
 import quart
@@ -83,6 +84,9 @@ class FeedItemMatch(typing.NamedTuple):
 # limit the number of simultaneous download processes
 download_sem = asyncio.Semaphore(3)
 
+# limit the rate at which we make player requests
+_player_request_limiter = aiolimiter.AsyncLimiter(1, 20)
+
 
 async def get_channel_matches(channel: YouTubeChannelMonitorConfig) -> list[FeedItemMatch]:
     matches = []
@@ -140,8 +144,9 @@ async def schedule_feed_match(match: FeedItemMatch) -> None:
     if video_in_history:
         return
 
-    # throttling for this happens in monitor_daemon()
-    resp = await fetch_youtube_player_response(match.video_id)
+    # throttle matches that involve player requests
+    async with _player_request_limiter:
+        resp = await fetch_youtube_player_response(match.video_id)
     if not resp or not resp.video_details:
         # video is unavailable; skip adding but allow for rechecks
         return
@@ -242,9 +247,7 @@ async def monitor_daemon() -> None:
                 pass
             else:
                 for match in matches:
-                    # stagger the scheduling since we don't want to hit the player requests too often
                     await schedule_feed_match(match)
-                    await asyncio.sleep(10)
 
         database.commit()
         await asyncio.sleep(600)
