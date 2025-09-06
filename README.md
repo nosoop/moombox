@@ -62,12 +62,12 @@ the necessary user-specific modifications.
 
 ## Configuration
 
-Configuration is controlled by a `config.toml` in the instance path.  See `config.example.toml`
-for documentation on the features.
+Configuration is controlled by a `config.toml` in
+[the instance path, as described by Flask][instance-path].  See `config.example.toml` for
+documentation on the features.
 
 If you launch moombox without a configuration file, the "Configuration" tab in the web interface
-will tell you which location it expects one in.  (This is specifically
-[the instance path, as described by Flask][instance-path].)
+will tell you which location it expects one in.
 
 You can set the `MOOMBOX_INSTANCE_PATH` environment variable to override the location.
 The Docker / Podman releases set the instance path to `/data/config` this way, and you should
