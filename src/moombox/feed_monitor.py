@@ -151,9 +151,14 @@ async def schedule_feed_match(match: FeedItemMatch) -> None:
         # video is unavailable; skip adding but allow for rechecks
         return
     elif not (
-        resp.video_details.is_post_live_dvr
-        or resp.video_details.is_upcoming
-        or resp.video_details.is_live
+        (
+            resp.video_details.is_post_live_dvr
+            or resp.video_details.is_upcoming
+            or resp.video_details.is_live
+        )
+        and (
+            resp.video_details.is_live_content or match.channel_config.include_non_live_content
+        )
     ):
         # add IDs that can no longer be downloaded into history so we know not to recheck them
         cur.execute("INSERT OR IGNORE INTO video_history VALUES (?);", (match.video_id,))

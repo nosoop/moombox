@@ -120,3 +120,10 @@ num_desc_lookbehind = 2
 # monitoring.  Videos manually scheduled for download are not currently checked for a
 # corresponding channel match.
 output_directory = "/opt/moombox/output/liz"
+
+# Whether or not premieres of non-live content are also downloaded.
+# This is false by default.
+# 
+# A reminder that this only downloads video premieres, and will not download the non-premiere
+# version.  Use yt-dlp if you want that.
+include_non_live_content = true
