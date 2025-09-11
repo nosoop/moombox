@@ -17,8 +17,8 @@ import moonarchive.models.messages as msgtypes
 import msgspec
 import quart
 from moonarchive.downloaders.youtube import YouTubeDownloader
+from moonarchive.downloaders.youtube.player import YTPlayerAdaptiveFormats, YTPlayerMediaType
 from moonarchive.models.ffmpeg import FFMPEGProgress
-from moonarchive.models.youtube_player import YTPlayerAdaptiveFormats, YTPlayerMediaType
 from moonarchive.output import BaseMessageHandler
 
 from .config import build_decode_hook, cfgmgr_ctx
