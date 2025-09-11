@@ -1,6 +1,6 @@
 [project]
 name = "moombox"
-version = "0.5.1"
+version = "0.5.2"
 
 classifiers = [
     "License :: OSI Approved :: MIT License",
