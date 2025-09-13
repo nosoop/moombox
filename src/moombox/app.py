@@ -251,10 +251,7 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
 
     @app.websocket("/ws/overview")
     async def stream_overview() -> None:
-        await quart.render_template(
-            "video_table.html",
-            download_manager=manager.visible_jobs,
-        )
+        await quart.websocket.accept()
         async for message in manager.subscribe():
             await quart.websocket.send(
                 await quart.render_template("video_item.html", video_item=message)
