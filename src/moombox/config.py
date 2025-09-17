@@ -13,6 +13,7 @@ from contextvars import ContextVar
 
 import msgspec
 import quart
+from moonarchive.util.paths import OutputPathTemplate, OutputPathTemplateVars
 
 cfgmgr_ctx: ContextVar["ConfigManager"] = ContextVar("cfgmgr")
 
@@ -43,8 +44,30 @@ _config_decode_hook = build_decode_hook(
     {
         typing.Pattern: re.compile,
         pathlib.Path: pathlib.Path,
+        OutputPathTemplate: OutputPathTemplate,
     }
 )
+
+_sample_vars = OutputPathTemplateVars(
+    title="stream title",
+    id="xxxxxxxxxxx.00",
+    video_id="xxxxxxxxxxx",
+    channel_id="UCxxxxxxxxxxxxxxxxxxxxxx",
+    channel="youtube channel",
+)
+_sample_vars.start_datetime = datetime.datetime.fromtimestamp(0, tz=datetime.UTC)
+
+
+
+def _validate_output_template(output_template: OutputPathTemplate) -> None:
+    """
+    Ensures that the output template is permitted.
+    """
+    p = output_template.to_path(_sample_vars, suffix=".description")
+    if p.is_absolute():
+        raise ValueError(
+            f"Output template '{output_template}' should not specify an absolute path"
+        )
 
 
 class NotificationConfig(msgspec.Struct):
@@ -83,6 +106,7 @@ class DownloaderConfig(msgspec.Struct, kw_only=True):
     num_parallel_downloads: PositiveInt = 1
     ffmpeg_path: pathlib.Path | None = None
     output_directory: pathlib.Path | None = None
+    output_template: OutputPathTemplate | None = None
     staging_directory: pathlib.Path | None = None
     po_token: str | None = None
     visitor_data: str | None = None
@@ -121,6 +145,8 @@ class DownloaderConfig(msgspec.Struct, kw_only=True):
                 raise ValueError(
                     f"Download output directory {self.output_directory} is not accessible"
                 )
+        if self.output_template:
+            _validate_output_template(self.output_template)
 
         if self.cookie_file and not self.cookie_file.exists():
             raise ValueError(f"Cookie file {self.cookie_file} does not exist")

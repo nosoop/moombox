@@ -76,6 +76,8 @@ class DownloadManager:
                 downloader.output_directory = cfgmgr.config.downloader.output_directory
             if not downloader.cookie_file:
                 downloader.cookie_file = cfgmgr.config.downloader.cookie_file
+            if not downloader.output_template:
+                downloader.output_template = cfgmgr.config.downloader.output_template
         if not downloader.staging_directory:
             downloader.staging_directory = pathlib.Path("staging") / jobid
 

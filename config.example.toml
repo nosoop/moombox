@@ -34,6 +34,17 @@ staging_directory = '/opt/moombox/staging'
 # Such files are not placed into a subdirectory.  This should be on a large storage device.
 output_directory = '/opt/moombox/output'
 
+# Output path template.  Allows for customizing the path stem (filename excluding suffix) and
+# dynamically specifying folders under the output directory.  Absolute paths are not permitted.
+# 
+# Note that this uses Python's '${key}' template syntax, not the '%(key)s' string interpolation
+# used by moonarchive (which was lifted from yt-dlp and ytarchive).
+# 
+# The below example places the file in a channel-specific folder under the output directory and
+# sets the filename to include the stream date and title / ID (the latter in yt-dlp's default
+# style).
+output_template = "${channel}/${start_date} ${title} [${id}]"
+
 # Maximum number of fragment downloads to have in-flight for each stream (each broadcast has at
 # least one video and one audio stream).
 num_parallel_downloads = 1
@@ -114,11 +125,12 @@ terms."rebroadcast" = '(?i)(\W|^)re-?broadcast'
 # default boilerplate that includes keyword matches.
 num_desc_lookbehind = 2
 
-# Optional custom output path override for streams.
+# Optional custom output base path override for streams.
+# If `$.downloader.output_template` is defined, it will be applied here as well.
 # 
-# NOTE: At this time, this only applies to videos that were automatically added via feed
-# monitoring.  Videos manually scheduled for download are not currently checked for a
-# corresponding channel match.
+# At this time, this only applies to videos that were automatically added via feed monitoring.
+# Videos manually scheduled for download are not currently checked for a corresponding channel
+# match.
 output_directory = "/opt/moombox/output/liz"
 
 # Whether or not premieres of non-live content are also downloaded.
