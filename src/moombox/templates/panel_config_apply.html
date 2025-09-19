@@ -1,6 +1,7 @@
-<span id="config-message" hx-swap-oob="true">
+{% if cfgmgr.read_only %}{% set config_result = "" %}{% endif %}
+<div id="config-message" class="callout {% if config_result %}callout--{{config_result}}{% endif %}" hx-swap-oob="true">
   {% if config_message %}
     {{ config_message }}
   {% endif %}
   {% if cfgmgr.read_only %}Configuration file is read-only.{% endif %}
-</span>
+</div>

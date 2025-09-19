@@ -4,8 +4,8 @@
     <form id="config-post" hx-put="/config" hx-swap="none">
       <sl-button id="configrestore" disabled>Restore file to last save</sl-button>
       <sl-button id="configapply" type="submit" disabled>Validate and apply changes</sl-button>
-      {% include "panel_config_apply.html" %}
     </form>
+    {% include "panel_config_apply.html" %}
     <sl-textarea id="configtext" name="config" form="config-post" resize="auto" label="Configuration file:" value="{{- cfgmgr.config_text -}}" {% if cfgmgr.read_only %}disabled{% endif %}></sl-textarea>
   </div>
   

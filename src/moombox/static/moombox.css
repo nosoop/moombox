@@ -160,3 +160,20 @@ sl-details::part(content) {
   /* hides trailing whitespace text node */
   display: inline-block;
 }
+.callout {
+  border-radius: 0.25rem;
+  padding: 0.5rem;
+  background-color: var(--sl-color-neutral-100);
+  color: var(--sl-color-neutral-800);
+}
+.callout--hidden {
+  display: none;
+}
+.callout--warning {
+  background-color: var(--sl-color-warning-100);
+  color: var(--sl-color-warning-800);
+}
+.callout--success {
+  background-color: var(--sl-color-success-100);
+  color: var(--sl-color-success-800);
+}

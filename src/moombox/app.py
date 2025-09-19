@@ -120,6 +120,7 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
             "index.html",
             download_manager=manager.visible_jobs,
             cfgmgr=cfgmgr,
+            config_result="hidden" if not cfgmgr.read_only else None,
         )
 
     @app.post("/add")
@@ -259,15 +260,21 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
 
     @app.put("/config")
     async def update_config() -> str:
+        result = None
         try:
             form = await quart.request.form
             cfgmgr.save_config(form["config"])
             message = "Changes saved"
+            result = "success"
         except (msgspec.ValidationError, msgspec.DecodeError) as exc:
             quart.current_app.logger.error(exc)
             message = str(exc)
+            result = "warning"
         return await quart.render_template(
-            "panel_config_apply.html", cfgmgr=cfgmgr, config_message=message
+            "panel_config_apply.html",
+            cfgmgr=cfgmgr,
+            config_message=message,
+            config_result=result,
         )
 
     @app.template_filter("human_size")
