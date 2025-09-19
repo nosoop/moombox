@@ -2,6 +2,7 @@
 
 import asyncio
 import collections
+import dataclasses
 import datetime
 import logging
 import os
@@ -79,6 +80,13 @@ def _validate_output_template(output_template: OutputPathTemplate) -> None:
             f"Found keys using interpolation syntax {interpolated_format}; "
             f"expected keys in template syntax {template_format}"
         )
+
+    var_names = set(field.name for field in dataclasses.fields(OutputPathTemplateVars))
+    template_idents = set(output_template.get_identifiers())
+    undefined_names = template_idents - var_names
+    if undefined_names:
+        undefined_name_list = ", ".join(undefined_names)
+        raise ValueError(f"Undefined key(s) {undefined_name_list} in template")
 
     p = output_template.to_path(_sample_vars, suffix=".description")
     if p.is_absolute():
