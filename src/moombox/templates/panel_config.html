@@ -6,7 +6,7 @@
       <sl-button id="configapply" type="submit" disabled>Validate and apply changes</sl-button>
     </form>
     {% include "panel_config_apply.html" %}
-    <sl-textarea id="configtext" name="config" form="config-post" resize="auto" label="Configuration file:" value="{{- cfgmgr.config_text -}}" {% if cfgmgr.read_only %}disabled{% endif %}></sl-textarea>
+    <sl-textarea id="configtext" name="config" form="config-post" resize="auto" aria-label="Configuration file:" value="{{- cfgmgr.config_text -}}" {% if cfgmgr.read_only %}disabled{% endif %}></sl-textarea>
   </div>
   
   <script>
