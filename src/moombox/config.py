@@ -57,12 +57,29 @@ _sample_vars = OutputPathTemplateVars(
 )
 _sample_vars.start_datetime = datetime.datetime.fromtimestamp(0, tz=datetime.UTC)
 
+_bcompat_format_match = re.compile(r"\%(?:\((?P<named>[_a-z][_a-z0-9]*)\)|(?P<invalid>))s?")
+"""
+Pattern to match legacy string interpolation format.
+We disallow this here in favor of the nicer, simpler template string syntax.
+"""
 
 
 def _validate_output_template(output_template: OutputPathTemplate) -> None:
     """
     Ensures that the output template is permitted.
     """
+    bcompat_items = {
+        bcmatch.group(0): bcmatch.group("named")
+        for bcmatch in _bcompat_format_match.finditer(output_template.template)
+    }
+    if bcompat_items:
+        interpolated_format = ", ".join(bcompat_items.keys())
+        template_format = ", ".join(f"${{{key}}}" for key in bcompat_items.values())
+        raise ValueError(
+            f"Found keys using interpolation syntax {interpolated_format}; "
+            f"expected keys in template syntax {template_format}"
+        )
+
     p = output_template.to_path(_sample_vars, suffix=".description")
     if p.is_absolute():
         raise ValueError(
