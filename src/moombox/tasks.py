@@ -115,13 +115,16 @@ class DownloadManager:
         cfgmgr = cfgmgr_ctx.get()
         now = datetime.datetime.now(tz=datetime.UTC)
         age = cfgmgr.config.tasklist.hide_finished_age
-        return [
-            job
-            for job in self.jobs.values()
-            if not job.download_finish_datetime
-            or not age
-            or now - job.download_finish_datetime < age
-        ]
+        return sorted(
+            (
+                job
+                for job in self.jobs.values()
+                if not job.download_finish_datetime
+                or not age
+                or now - job.download_finish_datetime < age
+            ),
+            key=DownloadJob.sort_key,
+        )
 
 
 manager_ctx: ContextVar[DownloadManager | None] = ContextVar("manager", default=None)
@@ -145,6 +148,19 @@ class DownloadStatus(enum.StrEnum):
         deletion during those states.
         """
         return self in (DownloadStatus.CANCELLED, DownloadStatus.FINISHED, DownloadStatus.ERROR)
+
+    @property
+    def sort_key(self) -> int:
+        match self:
+            case DownloadStatus.UNKNOWN:
+                # tasks are initially put in the unknown state, so we can treat that as
+                # effectively being "we just added this" and giving it sorting priority
+                return 3
+            case DownloadStatus.DOWNLOADING:
+                return 2
+            case DownloadStatus.WAITING:
+                return 1
+        return 0
 
 
 class DownloadLogMessage(NamedTuple):
@@ -231,6 +247,33 @@ class DownloadJob(BaseMessageHandler):
         if self.download_finish_datetime is None and self.status == DownloadStatus.FINISHED:
             # fall back to the last event entry for completed tasks
             self.download_finish_datetime = self.message_log[-1].event_datetime
+
+    @dataclasses.dataclass
+    class SortKey:
+        status: DownloadStatus = DownloadStatus.UNKNOWN
+        event_datetime: datetime.datetime | None = None
+
+        def __lt__(self, other: "DownloadJob.SortKey") -> bool:
+            if self.status.sort_key != other.status.sort_key:
+                return self.status.sort_key < other.status.sort_key
+            elif not self.event_datetime or not other.event_datetime:
+                # if either has no time, fall back to insertion order
+                return False
+            if self.status == DownloadStatus.WAITING:
+                # items with upcoming times closer to now should appear closer to the top
+                return self.event_datetime > other.event_datetime
+            return self.event_datetime < other.event_datetime
+
+    def sort_key(self) -> "DownloadJob.SortKey":
+        event_datetime = self.message_log[-1].event_datetime if len(self.message_log) else None
+        match self.status:
+            case DownloadStatus.FINISHED:
+                event_datetime = self.download_finish_datetime
+            case DownloadStatus.WAITING:
+                event_datetime = self.scheduled_start_datetime
+            case _:
+                pass
+        return DownloadJob.SortKey(self.status, event_datetime)
 
     async def handle_message(self, msg: msgtypes.BaseMessage) -> None:
         prev_status = self.status
