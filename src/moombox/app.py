@@ -4,6 +4,7 @@ import datetime
 import os
 import pathlib
 import sqlite3
+from typing import AsyncIterable
 
 import msgspec
 import quart
@@ -240,6 +241,33 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
                 await quart.render_template("video_job_details.html", video_item=message)
             )
 
+    @app.get("/sse/job/<id>")
+    async def push_job_info(id: str) -> quart.wrappers.response.Response:
+        if "text/event-stream" not in quart.request.accept_mimetypes:
+            quart.abort(400)
+
+        @quart.stream_with_context
+        async def send_events() -> AsyncIterable[bytes]:
+            async for message in manager.subscribe_detail(id):
+                for line in (
+                    await quart.render_template("video_job_details.html", video_item=message)
+                ).splitlines():
+                    yield f"data: {line}\n".encode("utf-8")
+                yield "\n\n".encode("utf-8")
+
+        response = await quart.make_response(
+            send_events(),
+            {
+                "Content-Type": "text/event-stream",
+                "Cache-Control": "no-cache",
+                "Transfer-Encoding": "chunked",
+                "X-Accel-Buffering": "no",
+            },
+        )
+        assert isinstance(response, quart.wrappers.response.Response)
+        response.timeout = None
+        return response
+
     @app.get("/status")
     async def get_status() -> list[dict]:
         return [job.get_status() for job in manager.jobs.values()]
@@ -257,6 +285,33 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
             await quart.websocket.send(
                 await quart.render_template("video_item.html", video_item=message)
             )
+
+    @app.get("/sse/overview")
+    async def push_overview() -> quart.wrappers.response.Response:
+        if "text/event-stream" not in quart.request.accept_mimetypes:
+            quart.abort(400)
+
+        @quart.stream_with_context
+        async def send_events() -> AsyncIterable[bytes]:
+            async for message in manager.subscribe():
+                for line in (
+                    await quart.render_template("video_item.html", video_item=message)
+                ).splitlines():
+                    yield f"data: {line}\n".encode("utf-8")
+                yield "\n\n".encode("utf-8")
+
+        response = await quart.make_response(
+            send_events(),
+            {
+                "Content-Type": "text/event-stream",
+                "Cache-Control": "no-cache",
+                "Transfer-Encoding": "chunked",
+                "X-Accel-Buffering": "no",
+            },
+        )
+        assert isinstance(response, quart.wrappers.response.Response)
+        response.timeout = None
+        return response
 
     @app.put("/config")
     async def update_config() -> str:
