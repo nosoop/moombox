@@ -13,7 +13,7 @@ from hypercorn.typing import ASGIFramework
 from moonarchive.downloaders.youtube import YouTubeDownloader
 
 from . import extractor
-from .config import ConfigManager
+from .config import VALID_RESOLUTION_VALUES, ConfigManager
 from .database import database_ctx
 from .feed_monitor import monitor_daemon
 from .notifications import NotificationManager
@@ -115,6 +115,10 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
         for job in manager.jobs.values():
             app.add_background_task(job.run_scheduled_healthchecks)
 
+    @app.context_processor
+    def add_constants() -> dict:
+        return {"valid_resolution_values": VALID_RESOLUTION_VALUES}
+
     @app.route("/")
     async def main() -> str:
         return await quart.render_template(
@@ -161,6 +165,7 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
             staging_directory=None,
             output_directory=output_directory,
             prioritize_vp9=form.get("prefer_vp9", False, type=bool),
+            max_video_resolution=form.get("max_video_resolution", None, type=int),
             cookie_file=None,
             num_parallel_downloads=form.get("num_jobs", 1, type=int),
         )

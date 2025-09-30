@@ -30,6 +30,9 @@ PatternMap = dict[str, typing.Pattern]
 TypeConversionMap = dict[typing.Type, typing.Callable]
 MsgspecDecodeHookCallable = typing.Callable[[typing.Type, typing.Any], typing.Any]
 
+# resolutions used in the resolution selection dropdown
+VALID_RESOLUTION_VALUES = {144, 240, 360, 480, 720, 1080, 1440, 2160, 4320}
+
 
 # builds a function that takes a mapping of types to callables that can build them
 def build_decode_hook(conversions: TypeConversionMap) -> MsgspecDecodeHookCallable:
@@ -129,6 +132,7 @@ class HealthcheckConfig(msgspec.Struct):
 
 class DownloaderConfig(msgspec.Struct, kw_only=True):
     num_parallel_downloads: PositiveInt = 1
+    max_video_resolution: PositiveInt = msgspec.field(default=max(VALID_RESOLUTION_VALUES))
     ffmpeg_path: pathlib.Path | None = None
     output_directory: pathlib.Path | None = None
     output_template: OutputPathTemplate | None = None
@@ -175,6 +179,15 @@ class DownloaderConfig(msgspec.Struct, kw_only=True):
 
         if self.cookie_file and not self.cookie_file.exists():
             raise ValueError(f"Cookie file {self.cookie_file} does not exist")
+
+        if (
+            self.max_video_resolution is not None
+            and self.max_video_resolution not in VALID_RESOLUTION_VALUES
+        ):
+            raise ValueError(
+                f"Invalid resolution preset {self.max_video_resolution} "
+                f"(expected one of {', '.join(map(str, sorted(VALID_RESOLUTION_VALUES)))})"
+            )
 
 
 class AppConfig(msgspec.Struct):

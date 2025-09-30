@@ -16,6 +16,12 @@ log_level = "WARNING"
 # Controls options within moonarchive, the underlying downloading tool.
 # Changes to the downloader options will only take effect on new downloads.
 
+# Controls the default maximum resolution downloaded.  The resolution of the video is the
+# minimum of the width and height; 1920x1080 and 1080x1920 are both 1080.
+# 
+# When manually adding a video, this can be overridden under the "Additional options" section.
+max_video_resolution = 4320
+
 # Overrides the ffmpeg binary used for muxing outputs.
 # Omitting this uses the ffmpeg resolved by PATH.  The uncommented path below is a Linux path:
 ffmpeg_path = "/opt/ffmpeg-custom/bin/ffmpeg"
