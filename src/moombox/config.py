@@ -141,6 +141,9 @@ class DownloaderConfig(msgspec.Struct, kw_only=True):
     visitor_data: str | None = None
     cookie_file: pathlib.Path | None = None
 
+    # experimental option - design is not finalized
+    unstable_bgutil_pot_provider_url: str | None = None
+
     def __post_init__(self) -> None:
         if self.ffmpeg_path:
             if not self.ffmpeg_path.exists():

@@ -80,6 +80,9 @@ class DownloadManager:
                 downloader.output_template = cfgmgr.config.downloader.output_template
             if not downloader.max_video_resolution:
                 downloader.max_video_resolution = cfgmgr.config.downloader.max_video_resolution
+            downloader.unstable_bgutil_pot_provider_url = (
+                cfgmgr.config.downloader.unstable_bgutil_pot_provider_url
+            )
         if not downloader.staging_directory:
             downloader.staging_directory = pathlib.Path("staging") / jobid
 

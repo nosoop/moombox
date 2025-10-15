@@ -82,6 +82,10 @@ visitor_data = "shorter-escaped-base64-value-here"
 # Again, if you're using visitor data, make sure to comment this value out or omit it entirely.
 cookie_file = "/path/to/your/cookie_file.txt"
 
+# URL to a BgUtils POT Provider instance to generate video ID-bound POTokens.
+# Note that this option is currently unstable and may be removed at any time.
+unstable_bgutil_pot_provider_url = "http://127.0.0.1:4416"
+
 [tasklist]
 # Controls the task view.
 
