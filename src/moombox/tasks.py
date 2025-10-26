@@ -7,6 +7,7 @@ import datetime
 import enum
 import functools
 import pathlib
+import re
 import secrets
 import traceback
 from contextvars import ContextVar
@@ -39,6 +40,15 @@ def _downloadjob_encode_hook(obj: Any) -> str:
             return str(obj.resolve())
         case _:
             raise TypeError(f"Unsupported type {type(obj)}")
+
+
+_KEBAB_PATTERNS = [re.compile(pat) for pat in (r"[^a-zA-Z0-9-_]+", r"[_\s]+")]
+
+
+def _kebab(s: str) -> str:
+    for pat in _KEBAB_PATTERNS:
+        s = pat.sub(" ", s)
+    return s.lower().strip().replace(" ", "-")
 
 
 @dataclasses.dataclass
@@ -170,6 +180,10 @@ class DownloadStatus(enum.StrEnum):
             case DownloadStatus.WAITING:
                 return 1
         return 0
+
+    @property
+    def html_classname(self) -> str:
+        return _kebab(str(self))
 
 
 class DownloadLogMessage(NamedTuple):

@@ -10,7 +10,7 @@
     <div id="video-job-info-author">
       <a href="https://youtube.com/channel/{{video_item.channel_id}}">{{ video_item.author or 'unknown author' }}</a>
     </div>
-    <sl-badge class="status {{video_item.status | lower}}" variant="primary">
+    <sl-badge class="status {{video_item.status.html_classname}}" variant="primary">
       {{video_item.status}}
     </sl-badge>
     <div id="fragment-summary">
