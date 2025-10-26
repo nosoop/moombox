@@ -334,6 +334,19 @@ class DownloadJob(BaseMessageHandler):
                 self.status = DownloadStatus.WAITING
                 if self.scheduled_start_datetime != msg.start_datetime:
                     self.scheduled_start_datetime = msg.start_datetime
+            case msgtypes.StreamWaitingMessage(scheduled_start_datetime=timestamp):
+                if timestamp:
+                    now = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0)
+                    self.append_message(
+                        "No stream available "
+                        + (
+                            f"(scheduled to start in {timestamp - now} at {timestamp})"
+                            if timestamp > now
+                            else f"(should have started {now - timestamp} ago at {timestamp})"
+                        )
+                    )
+                    if self.scheduled_start_datetime != timestamp:
+                        self.scheduled_start_datetime = timestamp
             case msgtypes.FragmentMessage():
                 self.status = DownloadStatus.DOWNLOADING
 
