@@ -12,7 +12,6 @@ a {
 #video-table {
   display: grid;
   grid-template-columns: fit-content(12.5%) auto fit-content(12.5%) fit-content(18.375%);
-  padding: var(--sl-spacing-medium) 0;
   gap: var(--sl-spacing-x-small) 0;
   @media only screen and (max-width: 992px) {
     grid-template-columns: repeat(3, minmax(0px, 1fr));
@@ -123,6 +122,11 @@ sl-tab::part(base) {
 }
 sl-tab-panel {
   --padding: var(--sl-spacing-medium);
+}
+sl-tab-panel::part(base) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sl-spacing-medium);
 }
 sl-details::part(content) {
   display: flex;
