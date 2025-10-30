@@ -1,4 +1,4 @@
-<div id="job_{{video_item.id}}" class="video-item" hx-swap-oob="morph">
+<div id="job_{{video_item.id}}" class="video-item {{video_item.status.html_classname}}" hx-swap-oob="morph">
   <div class="thumb">
     {% if video_item.thumbnail_url %}
     <img src="{{ video_item.thumbnail_url }}" referrerpolicy="no-referrer" loading="lazy" />
@@ -21,7 +21,7 @@
       {% endif %}
     </small>
   </div>
-  <div>
+  <div class="job__status-container">
     <sl-badge class="status {{video_item.status.html_classname}}" variant="primary">
       {{video_item.status}}
     </sl-badge>

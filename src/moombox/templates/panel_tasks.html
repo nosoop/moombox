@@ -27,4 +27,20 @@
   <div hx-ext="sse,morph" sse-connect="{{ url_for('push_overview') }}" hx-swap="none" sse-swap="message" >
     {% include 'video_table.html' %}
   </div>
+  <script>
+    if (localStorage.getItem("webui.compact") ?? false) {
+      const videoTable = document.getElementById("video-table");
+      videoTable.classList.add("compact");
+      document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById("localconf__compact").checked = true;
+      }, false);
+    }
+    
+    document.addEventListener("htmx:afterSettle", event => {
+      /* reapply compact modifier to table after changes */
+      if (event.detail.elt.matches("#video-table") && (localStorage.getItem("webui.compact") ?? false)) {
+        event.detail.elt.classList.add("compact");
+      }
+    });
+  </script>
 </sl-tab-panel>

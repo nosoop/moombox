@@ -9,6 +9,15 @@
     <sl-textarea id="configtext" name="config" form="config-post" resize="auto" aria-label="Configuration file:" value="{{- cfgmgr.config_text -}}" {% if cfgmgr.read_only %}disabled{% endif %}></sl-textarea>
   </div>
   
+  <div>
+    <div>
+      Per-browser settings:
+    </div>
+    <sl-switch id="localconf__compact">
+      <div>Compact mode<div>
+      <div><small>Removes thumbnails and replaces status badge with a simple color indicator.</small></div></sl-switch>
+  </div>
+  
   <script>
     const configtextarea = document.querySelector("#configtext");
     const configrestore = document.querySelector("#configrestore");
@@ -21,6 +30,16 @@
       configtextarea.value = configtextarea.defaultValue;
       configrestore.setAttribute("disabled", "");
       configapply.setAttribute("disabled", "");
+    });
+    document.getElementById("localconf__compact").addEventListener("sl-change", event => {
+      const videoTable = document.getElementById("video-table");
+      if (event.target.checked) {
+        localStorage.setItem("webui.compact", "true");
+        videoTable.classList.add("compact");
+      } else {
+        localStorage.removeItem("webui.compact");
+        videoTable.classList.remove("compact");
+      }
     });
   </script>
 </sl-tab-panel>

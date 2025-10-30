@@ -1,3 +1,6 @@
+:root {
+  --status-color: var(--sl-color-primary-500);
+}
 body {
   font-family: var(--sl-font-sans);
   margin: 0;
@@ -51,6 +54,35 @@ a {
     padding: var(--sl-spacing-small);
   }
 }
+
+.status--waiting {
+  --status-color: var(--sl-color-purple-700);
+}
+.status--downloading {
+  --status-color: var(--sl-color-success-500);
+}
+.status--muxing {
+  --status-color: var(--sl-color-warning-500);
+}
+.status--error {
+  --status-color: var(--sl-color-danger-500);
+}
+.status--finished {
+  --status-color: var(--sl-color-primary-500);
+}
+.status--unavailable {
+  --status-color: var( --sl-color-neutral-600);
+}
+.status--cancelled {
+  --status-color: var( --sl-color-neutral-600);
+}
+.status--unmuxed {
+  --status-color: var(--sl-color-warning-300);
+}
+.status--finished-split {
+  --status-color: var(--sl-color-indigo-600);
+}
+
 .stream-info {
   width: 100%;
 }
@@ -74,35 +106,36 @@ a {
     }
   }
 }
+#video-table.compact {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sl-spacing-3x-small);
+
+  & > #video-table-header {
+    display: none;
+  }
+  & .thumb {
+    display: none;
+  }
+  & .job__status-container {
+    display: none;
+  }
+  & .video-item {
+    padding: var(--sl-spacing-3x-small);
+    padding-left: var(--sl-spacing-x-small);
+    border-left: var(--sl-spacing-2x-small) solid var(--status-color);
+    gap: initial;
+    background-color: var(--sl-color-neutral-50);
+  }
+  & .job-progress {
+    font-size: small;
+  }
+}
+
 sl-badge.status {
   text-transform: uppercase;
-
-  &.waiting::part(base) {
-    background-color: var(--sl-color-purple-700);
-  }
-  &.downloading::part(base) {
-    background-color: var(--sl-color-success-500);
-  }
-  &.muxing::part(base) {
-    background-color: var(--sl-color-warning-500);
-  }
-  &.error::part(base) {
-    background-color: var(--sl-color-danger-500);
-  }
-  &.finished::part(base) {
-    background-color: var(--sl-color-primary-500);
-  }
-  &.unavailable::part(base) {
-    background-color: var( --sl-color-neutral-600);
-  }
-  &.cancelled::part(base) {
-    background-color: var( --sl-color-neutral-600);
-  }
-  &.unmuxed::part(base) {
-    background-color: var(--sl-color-warning-300);
-  }
-  &.finished-split::part(base) {
-    background-color: var(--sl-color-indigo-600)
+  &::part(base) {
+    background-color: var(--status-color);
   }
 }
 #dialog::part(body) {

@@ -198,7 +198,7 @@ class DownloadStatus(enum.StrEnum):
 
     @property
     def html_classname(self) -> str:
-        return _kebab(str(self))
+        return "status--" + _kebab(str(self))
 
     @property
     def notification_tag(self) -> str:
