@@ -4,6 +4,7 @@ import datetime
 import os
 import pathlib
 import sqlite3
+import time
 from typing import AsyncIterable
 
 import msgspec
@@ -115,9 +116,20 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
         for job in manager.jobs.values():
             app.add_background_task(job.run_scheduled_healthchecks)
 
+    # modified url_for ensures that static files aren't cached across server restarts / updates
+    cache_busting_str = f"{int(time.time()):x}"
+
+    def cache_busting_url_for(endpoint: str, **kwargs) -> str:
+        if endpoint == "static":
+            kwargs |= {"v": cache_busting_str}
+        return quart.url_for(endpoint, **kwargs)
+
     @app.context_processor
     def add_constants() -> dict:
-        return {"valid_resolution_values": VALID_RESOLUTION_VALUES}
+        return {
+            "valid_resolution_values": VALID_RESOLUTION_VALUES,
+            "url_for": cache_busting_url_for,
+        }
 
     @app.route("/")
     async def main() -> str:
