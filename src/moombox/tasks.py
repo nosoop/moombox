@@ -289,6 +289,15 @@ class DownloadJob(BaseMessageHandler):
         if self.download_finish_datetime is None and self.status == DownloadStatus.FINISHED:
             # fall back to the last event entry for completed tasks
             self.download_finish_datetime = self.message_log[-1].event_datetime
+        if self.status == DownloadStatus.FINISHED:
+            # update old tasks with new statuses if possible
+            if len(self.manifest_progress) > 1:
+                self.status = DownloadStatus.FINISHED_SPLIT
+            if any(
+                manifest.output.total_size is None
+                for manifest in self.manifest_progress.values()
+            ):
+                self.status = DownloadStatus.UNMUXED
 
     @dataclasses.dataclass
     class SortKey:
