@@ -185,6 +185,10 @@ class DownloadStatus(enum.StrEnum):
     def html_classname(self) -> str:
         return _kebab(str(self))
 
+    @property
+    def notification_tag(self) -> str:
+        return "status:" + _kebab(str(self))
+
 
 class DownloadLogMessage(NamedTuple):
     event_datetime: datetime.datetime
@@ -421,7 +425,7 @@ class DownloadJob(BaseMessageHandler):
             apobj.async_notify,
             title=f"Archive status: {str(self.status).capitalize()}",
             body=f"{self.title} from {self.author} @ https://youtu.be/{self.video_id}",
-            tag=f"status:{self.status.lower()}",
+            tag=self.status.notification_tag,
         )
 
     async def run_healthcheck(self) -> None:
