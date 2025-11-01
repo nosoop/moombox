@@ -28,6 +28,25 @@
     {% include 'video_table.html' %}
   </div>
   <script>
+    const INPUT_TAGS = new Set(["INPUT", "TEXTAREA", "SELECT", "SL-INPUT"]);
+    
+    /* bind forward slash to focus on task search */
+    window.addEventListener("keydown", e => {
+      if (e.key !== "/") {
+        return;
+      }
+      const search = document.querySelector("#tasklist__searchbar");
+      if (!document.querySelector("#tab__tasks").active) {
+        return;
+      } else if (INPUT_TAGS.has(document.activeElement.tagName)) {
+        return;
+      }
+      
+      e.preventDefault();
+      e.stopPropagation();
+      search.focus();
+    });
+    
     if (localStorage.getItem("webui.compact") ?? false) {
       const videoTable = document.getElementById("video-table");
       videoTable.classList.add("compact");
