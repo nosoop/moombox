@@ -131,7 +131,9 @@ a {
     font-size: small;
   }
 }
-
+.video-table--initial {
+  visibility: hidden;
+}
 sl-badge.status {
   text-transform: uppercase;
   &::part(base) {

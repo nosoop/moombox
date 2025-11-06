@@ -1,5 +1,5 @@
     <!-- this gets swapped in whenever we add a video -->
-    <div id="video-table" hx-swap-oob="true">
+    <div id="video-table" class="{{ 'video-table--initial' if not hx_request }}" hx-swap-oob="true">
       <div id="video-table-header">
         <div>Thumbnail</div>
         <div>Video</div>

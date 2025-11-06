@@ -129,6 +129,7 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
         return {
             "valid_resolution_values": VALID_RESOLUTION_VALUES,
             "url_for": cache_busting_url_for,
+            "hx_request": "HX-Request" in quart.request.headers,
         }
 
     @app.route("/")

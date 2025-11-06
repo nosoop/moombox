@@ -61,5 +61,9 @@
         event.detail.elt.classList.add("compact");
       }
     });
+    
+    document.addEventListener("DOMContentLoaded", () => {
+      document.querySelector("#video-table").classList.remove("video-table--initial");
+    });
   </script>
 </sl-tab-panel>
