@@ -269,18 +269,6 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
             task.cancel("Download job cancelled from web UI.")
         return ""
 
-    @app.websocket("/ws/job/<id>")
-    async def stream_job_info(id: str) -> None:
-        if id not in manager.jobs:
-            quart.abort(404, "Task not found")
-        await quart.websocket.send(
-            await quart.render_template("video_job_details.html", video_item=manager.jobs[id])
-        )
-        async for message in manager.subscribe_detail(id):
-            await quart.websocket.send(
-                await quart.render_template("video_job_details.html", video_item=message)
-            )
-
     @app.get("/sse/job/<id>")
     async def push_job_info(id: str) -> quart.wrappers.response.Response:
         if "text/event-stream" not in quart.request.accept_mimetypes:
@@ -317,14 +305,6 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
         if id not in manager.jobs:
             quart.abort(404, "Task not found")
         return manager.jobs[id].get_status()
-
-    @app.websocket("/ws/overview")
-    async def stream_overview() -> None:
-        await quart.websocket.accept()
-        async for message in manager.subscribe():
-            await quart.websocket.send(
-                await quart.render_template("video_item.html", video_item=message)
-            )
 
     @app.get("/sse/overview")
     async def push_overview() -> quart.wrappers.response.Response:
