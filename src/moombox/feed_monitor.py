@@ -88,14 +88,24 @@ download_sem = asyncio.Semaphore(3)
 _player_request_limiter = aiolimiter.AsyncLimiter(1, 20)
 
 
-async def get_channel_matches(channel: YouTubeChannelMonitorConfig) -> list[FeedItemMatch]:
-    matches = []
+async def process_channel_matches(channel: YouTubeChannelMonitorConfig) -> None:
     async with download_sem, httpx.AsyncClient() as client:
-        resp = await client.get(
-            f"https://www.youtube.com/feeds/videos.xml?channel_id={channel.id}"
-        )
-        feed = feedparser.parse(resp.text)
+        try:
+            resp = await client.get(
+                f"https://www.youtube.com/feeds/videos.xml?channel_id={channel.id}"
+            )
+            feed = feedparser.parse(resp.text)
+        except httpx.HTTPError:
+            return
 
+    for match in get_channel_matches(channel, feed):
+        await schedule_feed_match(match)
+
+
+def get_channel_matches(
+    channel: YouTubeChannelMonitorConfig, feed: feedparser.FeedParserDict
+) -> list[FeedItemMatch]:
+    matches = []
     for entry, *older_entries in _sliding_window(feed.entries, channel.num_desc_lookbehind):
         # filter out lines that are present in the next item in the feed
         # intended to reduce false positives if a match shows up as part of the 'template'
@@ -242,17 +252,9 @@ async def monitor_daemon() -> None:
             await modified_flag.wait()
             modified_flag.clear()
 
-        tasks = [get_channel_matches(c) for c in cfgmgr.config.channels]
-
-        for task in asyncio.as_completed(tasks):
-            try:
-                matches = await task
-            except httpx.HTTPError:
-                # TODO: we need to retry this
-                pass
-            else:
-                for match in matches:
-                    await schedule_feed_match(match)
+        async with asyncio.TaskGroup() as tg:
+            for c in cfgmgr.config.channels:
+                tg.create_task(process_channel_matches(c))
 
         database.commit()
         await asyncio.sleep(600)
