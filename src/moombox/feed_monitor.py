@@ -2,6 +2,8 @@
 
 import asyncio
 import collections
+import datetime
+import email
 import itertools
 import pathlib
 import re
@@ -9,6 +11,7 @@ import sqlite3
 import typing
 import unicodedata
 from contextvars import ContextVar
+from typing import AsyncIterable
 
 import aiolimiter
 import feedparser  # type: ignore
@@ -89,17 +92,65 @@ _player_request_limiter = aiolimiter.AsyncLimiter(1, 20)
 
 
 async def process_channel_matches(channel: YouTubeChannelMonitorConfig) -> None:
-    async with download_sem, httpx.AsyncClient() as client:
-        try:
-            resp = await client.get(
-                f"https://www.youtube.com/feeds/videos.xml?channel_id={channel.id}"
-            )
-            feed = feedparser.parse(resp.text)
-        except httpx.HTTPError:
-            return
+    async for text in poll_feed(
+        f"https://www.youtube.com/feeds/videos.xml?channel_id={channel.id}"
+    ):
+        feed = feedparser.parse(text)
+        for match in get_channel_matches(channel, feed):
+            await schedule_feed_match(match)
 
-    for match in get_channel_matches(channel, feed):
-        await schedule_feed_match(match)
+
+async def poll_feed(url: str) -> AsyncIterable[str]:
+    """
+    Task that attempts just-in-time monitoring on YouTube's channel endpoint (ensuring we
+    minimize making requests for stale results).  Note that requests may be routed to different
+    servers that already have a matching response in the cache with a different age.
+    """
+    async with httpx.AsyncClient() as client:
+        while True:
+            expiry_time = datetime.datetime.now(tz=datetime.UTC) + datetime.timedelta(minutes=5)
+
+            request_time = datetime.datetime.now(tz=datetime.UTC)
+            try:
+                async with download_sem:
+                    response = await client.get(url)
+                response.raise_for_status()
+
+                # we don't know how long it'll be before control is yielded back to this
+                # coroutine, so record the time our request was issued / finished to calculate
+                # when the cache expires
+                request_time = datetime.datetime.now(tz=datetime.UTC)
+                yield response.text
+            except httpx.HTTPStatusError:
+                if response.status_code == httpx.codes.NOT_FOUND:
+                    # the server may produce a 404 during general maintenance windows
+                    # TODO check if the channel is actually valid
+                    expiry_time = request_time + datetime.timedelta(minutes=2)
+            except httpx.RequestError:
+                await asyncio.sleep(20)
+                continue
+
+            if "Expires" in response.headers:
+                expiry_time = email.utils.parsedate_to_datetime(response.headers["Expires"])
+
+                if "Date" in response.headers:
+                    # calculate time to expiry based on server-reported values
+                    # this ensures we don't hit the server early if our system clock is ahead
+                    cache_date = email.utils.parsedate_to_datetime(response.headers["Date"])
+                    cache_age = datetime.timedelta(
+                        seconds=int(response.headers["Age"]) if "Age" in response.headers else 0
+                    )
+                    expiry_time = (expiry_time - cache_date - cache_age) + request_time.replace(
+                        microsecond=0
+                    )
+
+            sleep_duration = (
+                expiry_time
+                - datetime.datetime.now(tz=datetime.UTC)
+                + datetime.timedelta(seconds=1)
+            )
+
+            await asyncio.sleep(max(sleep_duration.total_seconds(), 10))
 
 
 def get_channel_matches(
@@ -243,18 +294,30 @@ async def monitor_daemon() -> None:
 
     _db_cursor_ctx.set(database.cursor())
 
+    active_channel_tasks: dict[YouTubeChannelMonitorConfig, asyncio.Task] = {}
+
     while True:
-        while not cfgmgr.config.channels:
-            # suspend feed monitoring while we don't have any channels to monitor
+        # remove channels that do not match existing configuration entries
+        for channel in set(active_channel_tasks) - set(cfgmgr.config.channels):
+            entry = active_channel_tasks.pop(channel, None)
+            if entry:
+                entry.cancel()
+
+        # process channels newly added to the config or changed
+        for channel in set(cfgmgr.config.channels) - set(active_channel_tasks):
+            active_channel_tasks[channel] = asyncio.create_task(
+                process_channel_matches(channel)
+            )
+
+        database.commit()
+        if not cfgmgr.config.channels:
             quart.current_app.logger.warning(
                 "No channels for monitoring; feed polling suspended - add channels by specifying '[[channels]]' sections"
             )
             await modified_flag.wait()
-            modified_flag.clear()
-
-        async with asyncio.TaskGroup() as tg:
-            for c in cfgmgr.config.channels:
-                tg.create_task(process_channel_matches(c))
-
-        database.commit()
-        await asyncio.sleep(600)
+        else:
+            try:
+                await asyncio.wait_for(modified_flag.wait(), 600)
+            except TimeoutError:
+                pass
+        modified_flag.clear()

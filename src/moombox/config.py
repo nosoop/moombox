@@ -103,7 +103,7 @@ class NotificationConfig(msgspec.Struct):
     tags: list[str] = msgspec.field(default_factory=list)
 
 
-class YouTubeChannelMonitorConfig(msgspec.Struct):
+class YouTubeChannelMonitorConfig(msgspec.Struct, frozen=True):
     id: str
     num_desc_lookbehind: NonNegativeInt = 2
     name: str | None = None
@@ -114,6 +114,18 @@ class YouTubeChannelMonitorConfig(msgspec.Struct):
     def __post_init__(self) -> None:
         if not self.id.startswith("UC"):
             raise ValueError(f"Expected 'UC' prefix for YouTube channel ID '{self.id}'")
+
+    def __hash__(self) -> int:
+        return hash(
+            (
+                self.id,
+                self.num_desc_lookbehind,
+                self.name,
+                tuple(self.terms.items()),
+                self.output_directory,
+                self.include_non_live_content,
+            )
+        )
 
 
 class TaskListConfig(msgspec.Struct):
