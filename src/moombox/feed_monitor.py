@@ -31,6 +31,7 @@ from .tasks import DownloadStatus, manager_ctx
 _compress_spaces = re.compile(r"(?i)(?<=\b[a-z])\s+(?=[a-z]\b)")
 
 _db_cursor_ctx: ContextVar[sqlite3.Cursor] = ContextVar("db_cursor")
+_database_write_flag_ctx: ContextVar[asyncio.Event] = ContextVar("database_write_flag")
 
 
 def strip_marks(text: str) -> str:
@@ -188,6 +189,7 @@ def get_channel_matches(
 
 async def schedule_feed_match(match: FeedItemMatch) -> None:
     manager = manager_ctx.get()
+    database_write_flag: asyncio.Event = _database_write_flag_ctx.get()
     if not manager:
         return
 
@@ -223,6 +225,7 @@ async def schedule_feed_match(match: FeedItemMatch) -> None:
     ):
         # add IDs that can no longer be downloaded into history so we know not to recheck them
         cur.execute("INSERT OR IGNORE INTO video_history VALUES (?);", (match.video_id,))
+        database_write_flag.set()
         return
 
     cfgmgr = cfgmgr_ctx.get()
@@ -276,6 +279,18 @@ async def schedule_feed_match(match: FeedItemMatch) -> None:
     )
 
 
+async def commit_debounce_task() -> None:
+    database_write_flag: asyncio.Event = _database_write_flag_ctx.get()
+    database = database_ctx.get()
+    if not database:
+        raise RuntimeError("Database is unavailable in current context")
+    while True:
+        await database_write_flag.wait()
+        await asyncio.sleep(10)
+        database.commit()
+        database_write_flag.clear()
+
+
 async def monitor_daemon() -> None:
     quart.current_app.logger.info("Monitoring task started")
     cfgmgr = cfgmgr_ctx.get()
@@ -293,6 +308,8 @@ async def monitor_daemon() -> None:
     database.commit()
 
     _db_cursor_ctx.set(database.cursor())
+    _database_write_flag_ctx.set(asyncio.Event())
+    quart.current_app.add_background_task(commit_debounce_task)
 
     active_channel_tasks: dict[YouTubeChannelMonitorConfig, asyncio.Task] = {}
 
@@ -309,7 +326,6 @@ async def monitor_daemon() -> None:
                 process_channel_matches(channel)
             )
 
-        database.commit()
         if not cfgmgr.config.channels:
             quart.current_app.logger.warning(
                 "No channels for monitoring; feed polling suspended - add channels by specifying '[[channels]]' sections"
