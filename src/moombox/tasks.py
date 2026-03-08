@@ -86,6 +86,7 @@ class DownloadManager:
             downloader.unstable_cipher_solver_url = (
                 cfgmgr.config.downloader.unstable_cipher_solver_url
             )
+            downloader.force_player_js_url = cfgmgr.config.downloader.force_player_js_url
         if not downloader.staging_directory:
             downloader.staging_directory = pathlib.Path("staging") / jobid
 

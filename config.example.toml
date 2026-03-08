@@ -90,6 +90,11 @@ unstable_bgutil_pot_provider_url = "http://127.0.0.1:4416"
 # Note that this option is currently unstable and may be removed at any time.
 unstable_cipher_solver_url = "https://cipher.kikkia.dev/"
 
+# A domain-relative URL to a YouTube player JS file.
+# This should only be set if the yt-cipher server is unable to perform the unscramble routine
+# on the version of the player that is retrieved at runtime.
+force_player_js_url = "/s/player/9f4cc5e4/player_ias.vflset/en_US/base.js"
+
 [tasklist]
 # Controls the task view.
 

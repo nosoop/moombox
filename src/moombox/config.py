@@ -140,6 +140,7 @@ class DownloaderConfig(msgspec.Struct, kw_only=True):
     po_token: str | None = None
     visitor_data: str | None = None
     cookie_file: pathlib.Path | None = None
+    force_player_js_url: str | None = None
 
     # experimental options - design is not finalized
     unstable_bgutil_pot_provider_url: str | None = None
