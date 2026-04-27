@@ -231,22 +231,9 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
         if id not in manager.jobs:
             quart.abort(404, "Task not found")
         job = manager.jobs[id]
-        if not job.downloader:
-            quart.abort(404, "Downloader not present")
         if not job.can_delete_tempfiles:
             quart.abort(400, "Cannot delete temporary files on an unfinished job")
-        assert job.video_id
-        if job.downloader.staging_directory and job.downloader.staging_directory.exists():
-            # avoid touching files not related to the job
-            # TODO: get the actual list of downloaded files from moonarchive
-            # TODO: disable functionality if files need to be manually processed
-            for f in job.downloader.staging_directory.iterdir():
-                if f.name.startswith(job.video_id):
-                    f.unlink()
-            try:
-                job.downloader.staging_directory.rmdir()
-            except OSError:
-                pass
+        await job.delete_tempfiles()
         return await quart.render_template(
             "video_job.html",
             video_item=manager.jobs[id],

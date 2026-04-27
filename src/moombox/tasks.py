@@ -564,6 +564,23 @@ class DownloadJob(BaseMessageHandler):
             msgspec.structs.replace(self, downloader=None), enc_hook=_downloadjob_encode_hook
         )
 
+    async def delete_tempfiles(self) -> None:
+        if not self.downloader:
+            return
+        if not self.video_id:
+            return
+        if self.downloader.staging_directory and self.downloader.staging_directory.exists():
+            # avoid touching files not related to the job
+            # TODO: get the actual list of downloaded files from moonarchive
+            # TODO: disable functionality if files need to be manually processed
+            for f in self.downloader.staging_directory.iterdir():
+                if f.name.startswith(self.video_id):
+                    f.unlink()
+            try:
+                self.downloader.staging_directory.rmdir()
+            except OSError:
+                pass
+
     def _get_next_healthcheck_interval(self) -> datetime.timedelta | None:
         """
         Returns the amount of time to wait between healthcheck requests, or None if no future
