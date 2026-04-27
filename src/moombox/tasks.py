@@ -6,6 +6,7 @@ import dataclasses
 import datetime
 import enum
 import functools
+import itertools
 import pathlib
 import re
 import secrets
@@ -284,6 +285,7 @@ class DownloadJob(BaseMessageHandler):
     )
     healthcheck: HealthCheckStatus = msgspec.field(default_factory=HealthCheckStatus)
     output_paths: set[pathlib.Path] = msgspec.field(default_factory=set)
+    temp_paths: set[pathlib.Path] = msgspec.field(default_factory=set)
 
     def __post_init__(self):
         if self.download_finish_datetime is None and self.status == DownloadStatus.FINISHED:
@@ -375,6 +377,9 @@ class DownloadJob(BaseMessageHandler):
                         self.status = DownloadStatus.FINISHED
                 self.append_message("Finished downloading")
                 self.output_paths = set(msg.output_paths)
+                self.temp_paths = set(
+                    itertools.chain.from_iterable(info.paths for info in msg.input_details)
+                )
                 self.download_finish_datetime = datetime.datetime.now(tz=datetime.UTC)
                 self.persist_to_database()
                 quart.current_app.add_background_task(self.run_scheduled_healthchecks)
@@ -565,6 +570,9 @@ class DownloadJob(BaseMessageHandler):
         )
 
     async def delete_tempfiles(self) -> None:
+        for path in self.temp_paths:
+            if path.exists():
+                path.unlink()
         if not self.downloader:
             return
         if not self.video_id:
