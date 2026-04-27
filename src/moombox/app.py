@@ -228,6 +228,7 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
         )
 
         job = manager.create_job(downloader)
+        job.video_id = video_id
 
         quart.current_app.add_background_task(job.run)
 
