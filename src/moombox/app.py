@@ -26,27 +26,6 @@ from .tasks import (
 )
 
 
-async def _update_job_details(job: DownloadJob, video_id: str) -> None:
-    video_response = await extractor.fetch_youtube_player_response(video_id)
-    if not video_response:
-        return
-    if video_response.video_details:
-        job.video_id = video_response.video_details.video_id
-        job.author = video_response.video_details.author
-        job.channel_id = video_response.video_details.channel_id
-        job.thumbnail_url = next(
-            (
-                thumb.url
-                for thumb in sorted(video_response.video_details.thumbnails, reverse=True)
-            ),
-            None,
-        )
-    if video_response.playability_status:
-        job.scheduled_start_datetime = (
-            video_response.playability_status.scheduled_start_datetime
-        )
-
-
 def create_quart_app(test_config: dict | None = None) -> quart.Quart:
     """
     Creates the Quart app.  This exposes additional methods that are not available under
@@ -184,9 +163,6 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
         )
 
         job = manager.create_job(downloader)
-
-        if video_id:
-            quart.current_app.add_background_task(_update_job_details, job, video_id)
 
         quart.current_app.add_background_task(job.run)
 

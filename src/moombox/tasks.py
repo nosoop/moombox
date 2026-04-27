@@ -333,7 +333,12 @@ class DownloadJob(BaseMessageHandler):
         match msg:
             case msgtypes.StreamInfoMessage():
                 self.title = msg.video_title
+                self.author = msg.channel_name
+                self.channel_id = msg.channel_id
+                self.thumbnail_url = msg.thumbnail_url
+                self.video_id = msg.video_id
                 self.status = DownloadStatus.WAITING
+
                 if self.scheduled_start_datetime != msg.start_datetime:
                     self.scheduled_start_datetime = msg.start_datetime
             case msgtypes.StreamWaitingMessage(scheduled_start_datetime=timestamp):

@@ -208,6 +208,11 @@ async def schedule_feed_match(match: FeedItemMatch) -> None:
         return
 
     # throttle matches that involve player requests
+    # TODO heartbeats should let us avoid player requests on:
+    # - upcoming or live streams / premieres (offline)
+    # - finished premieres (skip; no broadcast ID)
+    # - privated streams (skip; unplayable response)
+    # but we still need to filter for non-live content and fully processed streams
     async with _player_request_limiter:
         resp = await fetch_youtube_player_response(match.video_id)
     if not resp or not resp.video_details:
