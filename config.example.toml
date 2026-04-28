@@ -22,6 +22,12 @@ log_level = "WARNING"
 # When manually adding a video, this can be overridden under the "Additional options" section.
 max_video_resolution = 4320
 
+# Whether or not a thumbnail sidecar is written for stream downloads.
+write_thumbnail = true
+
+# Whether or not a description sidecar is written for stream downloads.
+write_description = true
+
 # Overrides the ffmpeg binary used for muxing outputs.
 # Omitting this uses the ffmpeg resolved by PATH.  The uncommented path below is a Linux path:
 ffmpeg_path = "/opt/ffmpeg-custom/bin/ffmpeg"

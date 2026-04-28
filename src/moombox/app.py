@@ -152,8 +152,20 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
             url=target,
             poll_interval=300,
             ffmpeg_path=None,
-            write_description=form.get("download_description", False, type=bool),
-            write_thumbnail=form.get("download_thumbnail", False, type=bool),
+            write_description=form.get(
+                "download_description",
+                False
+                if form.get("submitted_download_description")
+                else cfgmgr.config.downloader.write_description,
+                type=bool,
+            ),
+            write_thumbnail=form.get(
+                "download_thumbnail",
+                False
+                if form.get("submitted_download_thumbnail")
+                else cfgmgr.config.downloader.write_thumbnail,
+                type=bool,
+            ),
             staging_directory=None,
             output_directory=output_directory,
             prioritize_vp9=form.get("prefer_vp9", False, type=bool),

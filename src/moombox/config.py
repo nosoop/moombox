@@ -153,6 +153,8 @@ class DownloaderConfig(msgspec.Struct, kw_only=True):
     visitor_data: str | None = None
     cookie_file: pathlib.Path | None = None
     force_player_js_url: str | None = None
+    write_thumbnail: bool = True
+    write_description: bool = True
 
     # experimental options - design is not finalized
     unstable_bgutil_pot_provider_url: str | None = None

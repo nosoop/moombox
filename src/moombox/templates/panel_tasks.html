@@ -7,8 +7,13 @@
         <sl-input name="url" label="Video URL" defaultValue="" placeholder="https://youtu.be/&hellip;" inputmode="url" required autofocus autocomplete="off"></sl-input>
         <sl-input name="path" label="Download path" defaultValue="" placeholder="{{- cfgmgr.config.downloader.output_directory or './downloads' -}}" autocomplete="off"></sl-input>
         <sl-details summary="Additional options">
-          <sl-checkbox name="download_thumbnail" checked>Download thumbnail</sl-checkbox>
-          <sl-checkbox name="download_description" checked>Download description</sl-checkbox>
+          <!-- the 'submitted' hidden input determines if we intentionally unchecked the associated field, versus omitting it (e.g. when POSTing) -->
+          <sl-checkbox name="download_thumbnail" {{ "checked" if cfgmgr.config.downloader.write_thumbnail }}>Download thumbnail</sl-checkbox>
+          <input type="hidden" name="submitted_download_thumbnail" value="1">
+
+          <sl-checkbox name="download_description" {{ "checked" if cfgmgr.config.downloader.write_description }}>Download description</sl-checkbox>
+          <input type="hidden" name="submitted_download_description" value="1">
+
           <sl-checkbox name="prefer_vp9" checked>Prefer VP9 over H264 at equivalent resolution</sl-checkbox>
           <sl-input type="number" label="Concurrent stream download jobs" name="num_jobs" min="1" value="{{- cfgmgr.config.downloader.num_parallel_downloads -}}" step="1"></sl-input>
           <sl-select label="Maximum video resolution" name="max_video_resolution" value="{{- cfgmgr.config.downloader.max_video_resolution -}}">
