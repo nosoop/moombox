@@ -148,30 +148,42 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
         except (ValueError, OSError):
             pass
 
+        # backwards compatibility for previous form field names
+        download_description = form.get("download_description", None, type=bool)
+        download_thumbnail = form.get("download_thumbnail", None, type=bool)
+        prefer_vp9 = form.get("prefer_vp9", None, type=bool)
+        num_jobs = form.get("num_jobs", 1, type=int)
+
         downloader = YouTubeDownloader(
             url=target,
             poll_interval=300,
             ffmpeg_path=None,
             write_description=form.get(
-                "download_description",
+                "write_description",
                 False
-                if form.get("submitted_download_description")
+                if form.get("submitted_write_description")
+                else download_description
+                if download_description is not None
                 else cfgmgr.config.downloader.write_description,
                 type=bool,
             ),
             write_thumbnail=form.get(
-                "download_thumbnail",
+                "write_thumbnail",
                 False
-                if form.get("submitted_download_thumbnail")
+                if form.get("submitted_write_thumbnail")
+                else download_thumbnail
+                if download_thumbnail is not None
                 else cfgmgr.config.downloader.write_thumbnail,
                 type=bool,
             ),
             staging_directory=None,
             output_directory=output_directory,
             prioritize_vp9=form.get(
-                "prefer_vp9",
+                "prioritize_vp9",
                 False
-                if form.get("submitted_prefer_vp9")
+                if form.get("submitted_prioritize_vp9")
+                else prefer_vp9
+                if prefer_vp9 is not None
                 else cfgmgr.config.downloader.prioritize_vp9,
                 type=bool,
             ),
@@ -191,7 +203,7 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
             ),
             max_video_resolution=form.get("max_video_resolution", None, type=int),
             cookie_file=None,
-            num_parallel_downloads=form.get("num_jobs", 1, type=int),
+            num_parallel_downloads=form.get("num_parallel_downloads", 1, type=int) or num_jobs,
         )
 
         job = manager.create_job(downloader)
