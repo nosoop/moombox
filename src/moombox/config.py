@@ -155,6 +155,9 @@ class DownloaderConfig(msgspec.Struct, kw_only=True):
     force_player_js_url: str | None = None
     write_thumbnail: bool = True
     write_description: bool = True
+    prioritize_vp9: bool = True
+    prioritize_av1: bool = False
+    keep_ts_files: bool = True
 
     # experimental options - design is not finalized
     unstable_bgutil_pot_provider_url: str | None = None

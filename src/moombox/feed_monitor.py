@@ -254,7 +254,9 @@ async def schedule_feed_match(match: FeedItemMatch) -> None:
         write_thumbnail=True,
         output_directory=output_directory,
         staging_directory=None,
-        prioritize_vp9=True,
+        prioritize_vp9=cfgmgr.config.downloader.prioritize_vp9,
+        prioritize_av1=cfgmgr.config.downloader.prioritize_av1,
+        keep_ts_files=cfgmgr.config.downloader.keep_ts_files,
         cookie_file=None,
         num_parallel_downloads=cfgmgr.config.downloader.num_parallel_downloads,
     )

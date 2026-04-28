@@ -28,6 +28,15 @@ write_thumbnail = true
 # Whether or not a description sidecar is written for stream downloads.
 write_description = true
 
+# Whether or not to prefer VP9 files over H264 if present at an equivalent resolution.
+# If VP9 is the only option available at the highest available resolution (clamped to your max),
+# it will always be picked.
+prioritize_vp9 = true
+
+# Whether or not to prefer AV1 files over VP9 and H264 if present at an equivalent resolution.
+# As with prioritize_vp9, AV1 will always be picked if no other option is available.
+prioritize_av1 = false
+
 # Overrides the ffmpeg binary used for muxing outputs.
 # Omitting this uses the ffmpeg resolved by PATH.  The uncommented path below is a Linux path:
 ffmpeg_path = "/opt/ffmpeg-custom/bin/ffmpeg"
@@ -56,6 +65,10 @@ output_directory = '/opt/moombox/output'
 # sets the filename to include the stream date and title / ID (the latter in yt-dlp's default
 # style).
 output_template = "${channel}/${start_date} ${title} [${id}]"
+
+# Whether or not raw stream files are kept on successful downloads.  If false, raw stream files
+# are deleted if the broadcast mux is successful, even if multiple broadcasts are present.
+keep_ts_files = true
 
 # Maximum number of fragment downloads to have in-flight for each stream (each broadcast has at
 # least one video and one audio stream).

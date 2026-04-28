@@ -168,7 +168,27 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
             ),
             staging_directory=None,
             output_directory=output_directory,
-            prioritize_vp9=form.get("prefer_vp9", False, type=bool),
+            prioritize_vp9=form.get(
+                "prefer_vp9",
+                False
+                if form.get("submitted_prefer_vp9")
+                else cfgmgr.config.downloader.prioritize_vp9,
+                type=bool,
+            ),
+            prioritize_av1=form.get(
+                "prioritize_av1",
+                False
+                if form.get("submitted_prioritize_av1")
+                else cfgmgr.config.downloader.prioritize_av1,
+                type=bool,
+            ),
+            keep_ts_files=form.get(
+                "keep_ts_files",
+                False
+                if form.get("submitted_keep_ts_files")
+                else cfgmgr.config.downloader.keep_ts_files,
+                type=bool,
+            ),
             max_video_resolution=form.get("max_video_resolution", None, type=int),
             cookie_file=None,
             num_parallel_downloads=form.get("num_jobs", 1, type=int),

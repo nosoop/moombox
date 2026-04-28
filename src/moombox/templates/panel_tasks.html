@@ -14,7 +14,15 @@
           <sl-checkbox name="download_description" {{ "checked" if cfgmgr.config.downloader.write_description }}>Download description</sl-checkbox>
           <input type="hidden" name="submitted_download_description" value="1">
 
-          <sl-checkbox name="prefer_vp9" checked>Prefer VP9 over H264 at equivalent resolution</sl-checkbox>
+          <sl-checkbox name="keep_ts_files" value="1" {{ "checked" if cfgmgr.config.downloader.keep_ts_files }}>Keep raw stream files</sl-checkbox>
+          <input type="hidden" name="submitted_keep_ts_files" value="1">
+
+          <sl-checkbox name="prefer_vp9" value="1" {{ "checked" if cfgmgr.config.downloader.prioritize_vp9 }}>Prefer VP9 over H264 at equivalent resolution</sl-checkbox>
+          <input type="hidden" name="submitted_prefer_vp9" value="1">
+
+          <sl-checkbox name="prioritize_av1" value="1" {{ "checked" if cfgmgr.config.downloader.prioritize_av1 }}>Prefer AV1 over H264 at equivalent resolution</sl-checkbox>
+          <input type="hidden" name="submitted_prioritize_av1" value="1">
+
           <sl-input type="number" label="Concurrent stream download jobs" name="num_jobs" min="1" value="{{- cfgmgr.config.downloader.num_parallel_downloads -}}" step="1"></sl-input>
           <sl-select label="Maximum video resolution" name="max_video_resolution" value="{{- cfgmgr.config.downloader.max_video_resolution -}}">
             {% for resolution in valid_resolution_values | sort(reverse=True) %}
