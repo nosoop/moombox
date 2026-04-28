@@ -437,10 +437,15 @@ class DownloadJob(BaseMessageHandler):
             case _:
                 pass
 
+        manager = manager_ctx.get()
+        if manager and self.id in manager.active_tasks:
+            task = manager.active_tasks[self.id]
+            if task.cancelled():
+                self.status = DownloadStatus.CANCELLED
+
         if prev_status != self.status:
             self.broadcast_status_update()
 
-        manager = manager_ctx.get()
         if manager:
             quart.current_app.add_background_task(manager.publish, self)
             quart.current_app.add_background_task(manager.publish_detail, self.id, self)
