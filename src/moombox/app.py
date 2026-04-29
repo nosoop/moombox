@@ -25,6 +25,27 @@ from .tasks import (
     manager_ctx,
 )
 
+_CHECKBOX_MAPPING: dict[str, bool] = {
+    "on": True,
+    "off": False,
+}
+
+
+def _form_checkbox_bool(form_value: str) -> bool:
+    """
+    Helper function for a form field (represented as a checkbox) to accept boolean-like values.
+
+    Note that when a field is unchecked, the key is not present.  Use some other method to
+    determine if the field was unchecked or if the value wasn't submitted.
+    """
+    # not sure why doing _CHECKBOX_MAPPING.get(form_value, bool(int(form_value))) isn't working
+    # here...
+    return (
+        _CHECKBOX_MAPPING[form_value]
+        if form_value in _CHECKBOX_MAPPING
+        else bool(int(form_value))
+    )
+
 
 def create_quart_app(test_config: dict | None = None) -> quart.Quart:
     """
@@ -149,9 +170,9 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
             pass
 
         # backwards compatibility for previous form field names
-        download_description = form.get("download_description", None, type=bool)
-        download_thumbnail = form.get("download_thumbnail", None, type=bool)
-        prefer_vp9 = form.get("prefer_vp9", None, type=bool)
+        download_description = form.get("download_description", None, type=_form_checkbox_bool)
+        download_thumbnail = form.get("download_thumbnail", None, type=_form_checkbox_bool)
+        prefer_vp9 = form.get("prefer_vp9", None, type=_form_checkbox_bool)
         num_jobs = form.get("num_jobs", 1, type=int)
 
         downloader = YouTubeDownloader(
@@ -165,7 +186,7 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
                 else download_description
                 if download_description is not None
                 else cfgmgr.config.downloader.write_description,
-                type=bool,
+                type=_form_checkbox_bool,
             ),
             write_thumbnail=form.get(
                 "write_thumbnail",
@@ -174,7 +195,7 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
                 else download_thumbnail
                 if download_thumbnail is not None
                 else cfgmgr.config.downloader.write_thumbnail,
-                type=bool,
+                type=_form_checkbox_bool,
             ),
             staging_directory=None,
             output_directory=output_directory,
@@ -185,21 +206,21 @@ def create_quart_app(test_config: dict | None = None) -> quart.Quart:
                 else prefer_vp9
                 if prefer_vp9 is not None
                 else cfgmgr.config.downloader.prioritize_vp9,
-                type=bool,
+                type=_form_checkbox_bool,
             ),
             prioritize_av1=form.get(
                 "prioritize_av1",
                 False
                 if form.get("submitted_prioritize_av1")
                 else cfgmgr.config.downloader.prioritize_av1,
-                type=bool,
+                type=_form_checkbox_bool,
             ),
             keep_ts_files=form.get(
                 "keep_ts_files",
                 False
                 if form.get("submitted_keep_ts_files")
                 else cfgmgr.config.downloader.keep_ts_files,
-                type=bool,
+                type=_form_checkbox_bool,
             ),
             max_video_resolution=form.get("max_video_resolution", None, type=int),
             cookie_file=None,
