@@ -158,6 +158,7 @@ class DownloaderConfig(msgspec.Struct, kw_only=True):
     prioritize_vp9: bool = True
     prioritize_av1: bool = False
     keep_ts_files: bool = True
+    schedule_offset: int = 300
 
     # experimental options - design is not finalized
     unstable_bgutil_pot_provider_url: str | None = None

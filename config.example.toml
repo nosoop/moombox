@@ -28,6 +28,10 @@ write_thumbnail = true
 # Whether or not a description sidecar is written for stream downloads.
 write_description = true
 
+# For upcoming streams, start more frequently polling this number of seconds ahead of the
+# scheduled start time.
+schedule_offset = 300
+
 # Whether or not to prefer VP9 files over H264 if present at an equivalent resolution.
 # If VP9 is the only option available at the highest available resolution (clamped to your max),
 # it will always be picked.

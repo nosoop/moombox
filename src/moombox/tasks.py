@@ -91,6 +91,9 @@ class DownloadManager:
                 downloader.output_template = cfgmgr.config.downloader.output_template
             if not downloader.max_video_resolution:
                 downloader.max_video_resolution = cfgmgr.config.downloader.max_video_resolution
+            if not downloader.schedule_offset:
+                # TODO rework moonarchive to be int | None
+                downloader.schedule_offset = cfgmgr.config.downloader.schedule_offset
             downloader.unstable_bgutil_pot_provider_url = (
                 cfgmgr.config.downloader.unstable_bgutil_pot_provider_url
             )
