@@ -396,8 +396,11 @@ class DownloadJob(BaseMessageHandler):
             case msgtypes.StreamMuxMessage():
                 self.status = DownloadStatus.MUXING
                 self.append_message("Started remux process")
-            case msgtypes.StreamUnavailableMessage():
+            case msgtypes.StreamUnavailableMessage(reason=reason):
                 self.status = DownloadStatus.UNAVAILABLE
+                self.append_message(
+                    f"Stream is unavailable ({reason or 'no reason specified'})"
+                )
             case msgtypes.FormatSelectionMessage():
                 major_type_str = str(msg.major_type).capitalize()
                 display_media_type = msg.format.media_type.codec_primary or "unknown codec"
