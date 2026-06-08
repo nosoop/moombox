@@ -76,21 +76,22 @@ mount a folder to that location when running it (as described in the installatio
 [instance-path]: https://flask.palletsprojects.com/en/stable/config/#instance-folders
 
 > [!IMPORTANT]
-> These days, a proof-of-origin token is practically a requirement when downloading from
-> YouTube.  [moonarchive's section on proof-of-origin downloads][pot-dl] covers this
-> extensively.
-> 
-> It is strongly recommended to set both `downloader.po_token` and either
-> `downloader.visitor_data` or `downloader.cookie_file` before downloading a file; otherwise
-> YouTube may block your connection from accessing videos.  To obtain that information:
+> You will need additional software configured under `$.downloader`.  Specifcally, the following
+> options are required:
 >
-> - `po_token`: See [yt-dlp &rarr; PO Token for GVS][pot-gvs].
-> - `visitor_data`: See the above; the value you want can be retrieved using
->   `ytcfg.get('VISITOR_DATA')` in the browser console.
+> - `unstable_bgutil_pot_provider_url`: See [content-based tokens].
+> - `unstable_cipher_solver_url`: See [n-parameter solving].
+>
+> Note that (still) the options may change.  It's likely that backwards compatibility will be
+> maintained such that those options will work in the future.
+>
+> The following value is optional; mainly only relevant if you are interested in downloading
+> members-only content.
+>
 > - `cookie_file`: See [yt-dlp &rarr; Exporting YouTube cookies][yt-cookies].
 
-[pot-dl]: https://github.com/nosoop/moonarchive?tab=readme-ov-file#proof-of-origin-downloads
-[pot-gvs]: https://github.com/yt-dlp/yt-dlp/wiki/PO-Token-Guide#po-token-for-gvs
+[content-based tokens]: https://github.com/nosoop/moonarchive#content-based-tokens
+[n-parameter solving]: https://github.com/nosoop/moonarchive#n-parameter-solving
 [yt-cookies]: https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies
 
 ## License
